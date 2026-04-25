@@ -15,11 +15,9 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 export function AppShell({
   children,
-  email,
   profile
 }: {
   children: ReactNode;
-  email: string;
   profile: ProfileRow;
 }) {
   const pathname = usePathname();
@@ -64,7 +62,7 @@ export function AppShell({
 
               <div className="flex flex-wrap items-center gap-3">
                 <ThemeToggle />
-                <UserMenu displayName={profile.display_name || "Study buddy"} email={email} />
+                <UserMenu displayName={profile.display_name || "Study buddy"} />
               </div>
             </div>
           </div>
