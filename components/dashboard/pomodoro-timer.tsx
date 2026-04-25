@@ -199,6 +199,17 @@ export function PomodoroTimer({
     setState(createInitialPomodoroState(state.focusMinutes, state.breakMinutes));
   }
 
+  function handleDiscard() {
+    const confirmed = window.confirm("Discard this current Pomodoro cycle without saving it?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFeedback("Pomodoro cycle discarded.");
+    setState(createInitialPomodoroState(state.focusMinutes, state.breakMinutes));
+  }
+
   async function handleStopAndSave() {
     const endedAt = new Date();
 
@@ -337,6 +348,12 @@ export function PomodoroTimer({
         <Button size="lg" variant="ghost" onClick={handleReset}>
           Reset
         </Button>
+
+        {(state.status === "running" || state.status === "paused") && (
+          <Button size="lg" variant="ghost" onClick={handleDiscard} disabled={isSaving}>
+            Discard
+          </Button>
+        )}
       </div>
 
       {feedback ? (

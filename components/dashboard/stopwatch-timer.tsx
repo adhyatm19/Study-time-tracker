@@ -140,6 +140,17 @@ export function StopwatchTimer({
     });
   }
 
+  function handleDiscard() {
+    const confirmed = window.confirm("Discard this stopwatch session without saving it?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFeedback("Stopwatch session discarded.");
+    setState(initialStopwatchState);
+  }
+
   async function handleStop() {
     const endedAt = new Date();
 
@@ -207,6 +218,12 @@ export function StopwatchTimer({
         {state.status !== "idle" ? (
           <Button size="lg" variant="outline" onClick={() => void handleStop()} disabled={isSaving}>
             {isSaving ? "Saving..." : "Stop & save"}
+          </Button>
+        ) : null}
+
+        {state.status !== "idle" ? (
+          <Button size="lg" variant="ghost" onClick={handleDiscard} disabled={isSaving}>
+            Discard
           </Button>
         ) : null}
       </div>

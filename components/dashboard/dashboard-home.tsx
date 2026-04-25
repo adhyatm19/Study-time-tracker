@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AnalyticsSection } from "@/components/dashboard/analytics-section";
 import { Leaderboard } from "@/components/dashboard/leaderboard";
+import { RecentSessions } from "@/components/dashboard/recent-sessions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { TimerCard } from "@/components/dashboard/timer-card";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
@@ -28,6 +29,10 @@ export function DashboardHome({
 }: DashboardHomeProps) {
   const [sessions, setSessions] = useState(initialSessions);
 
+  useEffect(() => {
+    setSessions(initialSessions);
+  }, [initialSessions]);
+
   const sortedSessions = useMemo(
     () =>
       [...sessions].sort(
@@ -38,6 +43,10 @@ export function DashboardHome({
 
   function handleSessionSaved(session: StudySessionRow) {
     setSessions((current) => [session, ...current]);
+  }
+
+  function handleSessionDeleted(sessionId: string) {
+    setSessions((current) => current.filter((session) => session.id !== sessionId));
   }
 
   return (
@@ -66,6 +75,8 @@ export function DashboardHome({
       <StatsCards sessions={sortedSessions} />
 
       <TimerCard profile={profile} onSessionSaved={handleSessionSaved} />
+
+      <RecentSessions sessions={sortedSessions} onSessionDeleted={handleSessionDeleted} />
 
       <section className="space-y-6">
         <div>
