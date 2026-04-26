@@ -15,8 +15,10 @@ import {
 import { saveStudySession } from "@/lib/study-sessions";
 import { formatClock, formatDuration } from "@/lib/utils";
 import { type Database } from "@/types/database";
+import { useFloatingTimer } from "@/components/dashboard/use-floating-timer";
 
 type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
+const POMODORO_NOTIFICATIONS_STORAGE_KEY = "quiet-ledger:pomodoro-notifications";
 
 interface PomodoroTimerProps {
   defaultFocusMinutes: number;
@@ -41,12 +43,29 @@ export function PomodoroTimer({
   const [isHydrated, setIsHydrated] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsSupported, setNotificationsSupported] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const transitionRef = useRef(false);
+  const phaseEndNotificationRef = useRef<string | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
     const raw = window.localStorage.getItem(POMODORO_STORAGE_KEY);
+    const supportsNotifications = "Notification" in window;
+    setNotificationsSupported(supportsNotifications);
+
+    if (supportsNotifications) {
+      const storedNotifications = window.localStorage.getItem(POMODORO_NOTIFICATIONS_STORAGE_KEY) === "true";
+      const canNotify = Notification.permission === "granted";
+      setNotificationsEnabled(storedNotifications && canNotify);
+
+      if (storedNotifications && Notification.permission === "denied") {
+        window.localStorage.removeItem(POMODORO_NOTIFICATIONS_STORAGE_KEY);
+        setNotificationMessage("Notifications were blocked.");
+      }
+    }
 
     if (!raw) {
       return;
@@ -90,6 +109,74 @@ export function PomodoroTimer({
   }, [state.status]);
 
   const remainingSeconds = useMemo(() => getPomodoroRemainingSeconds(state, nowMs), [nowMs, state]);
+  const { openFloatingTimer, floatingTimerMessage } = useFloatingTimer({
+    mode: "pomodoro",
+    phase: state.phase,
+    status: state.status,
+    seconds: remainingSeconds,
+    rounding: "ceil"
+  });
+
+  useEffect(() => {
+    phaseEndNotificationRef.current = null;
+  }, [state.phase, state.phaseStartedAt]);
+
+  function notifyPhaseComplete(completedPhase: PomodoroTimerState["phase"], phaseStartedAt: string | null) {
+    if (!notificationsEnabled || typeof window === "undefined" || !("Notification" in window)) {
+      return;
+    }
+
+    if (Notification.permission !== "granted") {
+      return;
+    }
+
+    const notificationKey = `${completedPhase}:${phaseStartedAt ?? "not-started"}`;
+
+    if (phaseEndNotificationRef.current === notificationKey) {
+      return;
+    }
+
+    phaseEndNotificationRef.current = notificationKey;
+
+    try {
+      if (completedPhase === "focus") {
+        new Notification("Focus session complete", { body: "Time for a break." });
+      } else {
+        new Notification("Break complete", { body: "Time to start studying again." });
+      }
+    } catch {
+      setNotificationMessage("Notifications could not be shown.");
+    }
+  }
+
+  async function handleNotificationsClick() {
+    setNotificationMessage(null);
+
+    if (!("Notification" in window)) {
+      setNotificationsEnabled(false);
+      setNotificationMessage("Notifications are not supported in this browser.");
+      return;
+    }
+
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+      window.localStorage.removeItem(POMODORO_NOTIFICATIONS_STORAGE_KEY);
+      return;
+    }
+
+    const permission =
+      Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
+
+    if (permission === "granted") {
+      setNotificationsEnabled(true);
+      window.localStorage.setItem(POMODORO_NOTIFICATIONS_STORAGE_KEY, "true");
+      return;
+    }
+
+    setNotificationsEnabled(false);
+    window.localStorage.removeItem(POMODORO_NOTIFICATIONS_STORAGE_KEY);
+    setNotificationMessage("Notifications were blocked.");
+  }
 
   async function transitionPhase(currentState: PomodoroTimerState) {
     if (transitionRef.current) {
@@ -117,6 +204,7 @@ export function PomodoroTimer({
         });
 
         onSessionSaved(session);
+        notifyPhaseComplete("focus", currentState.phaseStartedAt);
         setFeedback(`Focus block complete. Saved ${formatDuration(pausedSnapshot.focusMinutes * 60)}.`);
         setState({
           ...pausedSnapshot,
@@ -138,6 +226,7 @@ export function PomodoroTimer({
       return;
     }
 
+    notifyPhaseComplete("break", currentState.phaseStartedAt);
     setFeedback("Break complete. Ready for the next focus block.");
     setState(createInitialPomodoroState(currentState.focusMinutes, currentState.breakMinutes));
     transitionRef.current = false;
@@ -354,7 +443,32 @@ export function PomodoroTimer({
             Discard
           </Button>
         )}
+
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => void handleNotificationsClick()}
+          disabled={!notificationsSupported}
+        >
+          {notificationsEnabled ? "Notifications enabled" : "Enable notifications"}
+        </Button>
+
+        <Button size="lg" variant="outline" onClick={() => void openFloatingTimer()}>
+          Floating timer
+        </Button>
       </div>
+
+      {floatingTimerMessage ? (
+        <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">
+          {floatingTimerMessage}
+        </div>
+      ) : null}
+
+      {notificationMessage ? (
+        <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">
+          {notificationMessage}
+        </div>
+      ) : null}
 
       {feedback ? (
         <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">{feedback}</div>

@@ -8,6 +8,7 @@ import { initialStopwatchState, STOPWATCH_STORAGE_KEY, type StopwatchTimerState,
 import { saveStudySession } from "@/lib/study-sessions";
 import { formatClock, formatDuration } from "@/lib/utils";
 import { type Database } from "@/types/database";
+import { useFloatingTimer } from "@/components/dashboard/use-floating-timer";
 
 type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
 
@@ -76,6 +77,12 @@ export function StopwatchTimer({
   }, [state.status]);
 
   const elapsedSeconds = useMemo(() => getElapsedSeconds(state, nowMs), [nowMs, state]);
+  const { openFloatingTimer, floatingTimerMessage } = useFloatingTimer({
+    mode: "stopwatch",
+    status: state.status,
+    seconds: elapsedSeconds,
+    rounding: "floor"
+  });
 
   async function persistSession(snapshot: StopwatchTimerState, endedAt: string, durationSeconds: number) {
     setIsSaving(true);
@@ -226,7 +233,17 @@ export function StopwatchTimer({
             Discard
           </Button>
         ) : null}
+
+        <Button size="lg" variant="outline" onClick={() => void openFloatingTimer()}>
+          Floating timer
+        </Button>
       </div>
+
+      {floatingTimerMessage ? (
+        <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">
+          {floatingTimerMessage}
+        </div>
+      ) : null}
 
       <div className="rounded-[1.75rem] border border-border/70 bg-background/60 p-5 text-sm text-muted-foreground">
         <p>Sessions under 60 seconds ask for confirmation before they’re stored.</p>

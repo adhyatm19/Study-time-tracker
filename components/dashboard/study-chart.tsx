@@ -14,6 +14,7 @@ import {
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
+import { formatStudyDuration } from "@/lib/utils";
 
 type ChartDatum = Record<string, string | number>;
 
@@ -37,6 +38,7 @@ export function StudyChart({
   emptyDescription = "Start a timer and save a session to see this chart fill in."
 }: StudyChartProps) {
   const hasData = data.some((item) => Number(item[dataKey] ?? 0) > 0);
+  const formatTooltipDuration = (value: number) => formatStudyDuration(Math.round(value * 3600));
 
   if (!hasData) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
@@ -62,7 +64,7 @@ export function StudyChart({
                 width={56}
               />
               <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)}h`, "Average"]}
+                formatter={(value: number) => [formatTooltipDuration(value), "Average"]}
                 contentStyle={{
                   borderRadius: "1rem",
                   border: "1px solid hsl(var(--border))",
@@ -88,7 +90,7 @@ export function StudyChart({
                 width={56}
               />
               <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)}h`, "Study time"]}
+                formatter={(value: number) => [formatTooltipDuration(value), "Study time"]}
                 contentStyle={{
                   borderRadius: "1rem",
                   border: "1px solid hsl(var(--border))",

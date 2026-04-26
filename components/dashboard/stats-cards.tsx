@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { Card } from "@/components/shared/card";
-import { calculateCurrentStreak, calculateRangeTotal, formatHoursMinutes } from "@/lib/utils";
+import { calculateCurrentStreak, calculateRangeTotal, formatStudyDuration } from "@/lib/utils";
 import { type Database } from "@/types/database";
 
 type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
@@ -13,17 +13,17 @@ export function StatsCards({ sessions }: { sessions: StudySessionRow[] }) {
     () => [
       {
         label: "Today",
-        value: formatHoursMinutes(calculateRangeTotal(sessions, "today")),
+        value: formatStudyDuration(calculateRangeTotal(sessions, "today")),
         note: "Tracked today"
       },
       {
         label: "This week",
-        value: formatHoursMinutes(calculateRangeTotal(sessions, "week")),
+        value: formatStudyDuration(calculateRangeTotal(sessions, "week")),
         note: "Since Monday"
       },
       {
         label: "This month",
-        value: formatHoursMinutes(calculateRangeTotal(sessions, "month")),
+        value: formatStudyDuration(calculateRangeTotal(sessions, "month")),
         note: "Current month"
       },
       {
