@@ -44,6 +44,20 @@ export function formatHoursMinutes(totalSeconds: number) {
   return `${hours}:${minutes.toString().padStart(2, "0")}`;
 }
 
+export function formatStudyDuration(totalSeconds: number) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const hourLabel = hours === 1 ? "hour" : "hours";
+  const minuteLabel = minutes === 1 ? "minute" : "minutes";
+
+  if (hours > 0) {
+    return `${hours} ${hourLabel} ${minutes} ${minuteLabel}`;
+  }
+
+  return `${minutes} ${minuteLabel}`;
+}
+
 export function getDateRange(days: number) {
   const end = new Date();
   const start = new Date(end);
