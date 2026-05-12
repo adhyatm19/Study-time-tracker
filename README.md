@@ -5,7 +5,8 @@ Quiet Ledger is a minimalist study time tracker for small friend groups. It uses
 - Email/password authentication
 - Stopwatch and Pomodoro timers
 - Local ambient audio playback from `public/audio/`
-- Personal analytics for the last 14 days, 30 days, and weekly averages
+- Personal analytics for lifetime totals, the last 14 days, 30 days, and weekly averages
+- A local todo list for quick study tasks
 - A private leaderboard scoped by shared `group_code`
 - Profile/settings for display name, timer defaults, and preferred BGM
 
@@ -16,6 +17,7 @@ Quiet Ledger is a minimalist study time tracker for small friend groups. It uses
 - Tailwind CSS
 - Supabase Auth + Postgres
 - Recharts
+- Lucide icons
 - Custom clean UI components
 - Vercel-friendly project structure
 
@@ -123,11 +125,17 @@ public/
 
 ### Analytics
 
+- Lifetime total studied since the user started logging
 - 14-day chart
 - 30-day chart
 - Weekly average chart
 - All chart values are displayed in hours with one decimal place
 - Empty states render when there is no data
+
+### Todos
+
+- Dashboard todo list is currently saved in `localStorage`
+- This keeps the feature lightweight and migration-free, but tasks are device-local
 
 ### Leaderboard
 

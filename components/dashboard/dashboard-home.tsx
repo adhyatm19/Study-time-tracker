@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Leaf, UsersRound, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AnalyticsSection } from "@/components/dashboard/analytics-section";
 import { Leaderboard } from "@/components/dashboard/leaderboard";
+import { RecentSessions } from "@/components/dashboard/recent-sessions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { TimerCard } from "@/components/dashboard/timer-card";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
@@ -27,6 +29,11 @@ export function DashboardHome({
   leaderboardEntries
 }: DashboardHomeProps) {
   const [sessions, setSessions] = useState(initialSessions);
+  const [showFocusTip, setShowFocusTip] = useState(true);
+
+  useEffect(() => {
+    setSessions(initialSessions);
+  }, [initialSessions]);
 
   const sortedSessions = useMemo(
     () =>
@@ -40,26 +47,36 @@ export function DashboardHome({
     setSessions((current) => [session, ...current]);
   }
 
+  function handleSessionDeleted(sessionId: string) {
+    setSessions((current) => current.filter((session) => session.id !== sessionId));
+  }
+
   return (
     <div className="space-y-8">
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-end">
+      <section className="grid gap-5 xl:grid-cols-[1.45fr_0.65fr] xl:items-end">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Dashboard</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1 className="text-4xl font-semibold sm:text-5xl">
             Welcome back, {profile.display_name || "study buddy"}.
           </h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-            Keep the session timer nearby, glance at your rhythm, and compare progress with the people sharing your group code.
+          <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
+            Stay focused, track your progress, and achieve your goals with your group.
           </p>
         </div>
 
-        <Card className="rounded-[1.75rem] p-5">
-          <CardTitle>Group space</CardTitle>
-          <CardDescription className="mt-2">
-            {profile.group_code
-              ? `You’re tracking with group ${profile.group_code}.`
-              : "Set a group code in settings to unlock the shared leaderboard."}
-          </CardDescription>
+        <Card className="rounded-[1.35rem] p-5">
+          <div className="flex items-center gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-muted text-accent">
+              <UsersRound className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div>
+              <CardTitle>Group space</CardTitle>
+              <CardDescription className="mt-1">
+                {profile.group_code
+                  ? `You’re tracking with group ${profile.group_code}.`
+                  : "Set a group code in settings to unlock the shared leaderboard."}
+              </CardDescription>
+            </div>
+          </div>
         </Card>
       </section>
 
@@ -67,9 +84,31 @@ export function DashboardHome({
 
       <TimerCard profile={profile} onSessionSaved={handleSessionSaved} />
 
+      {showFocusTip ? (
+        <Card className="flex items-center gap-4 rounded-[1.1rem] bg-muted/70 p-4">
+          <Leaf className="h-6 w-6 shrink-0 text-accent" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Focus Tip</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Take breaks, stay hydrated, and trust the process. Small steps every day lead to big results.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFocusTip(false)}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background/70 text-muted-foreground"
+            aria-label="Dismiss focus tip"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </Card>
+      ) : null}
+
+      <RecentSessions sessions={sortedSessions} onSessionDeleted={handleSessionDeleted} />
+
       <section className="space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Analytics</h2>
+          <h2 className="text-2xl font-semibold">Analytics</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             A quick picture of your recent study patterns, with a fuller analytics page for deeper review.
           </p>

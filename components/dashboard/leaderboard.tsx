@@ -4,7 +4,7 @@ import { buttonStyles } from "@/components/shared/button";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { LEADERBOARD_FILTERS } from "@/lib/constants";
 import { type LeaderboardEntry } from "@/lib/leaderboard";
-import { cn, formatHours } from "@/lib/utils";
+import { cn, formatStudyDuration } from "@/lib/utils";
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
@@ -94,13 +94,11 @@ export function Leaderboard({
                   <p className="truncate font-medium">
                     {entry.display_name || "Study buddy"} {isCurrentUser ? "· You" : ""}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {Number.isFinite(entry.total_hours) ? entry.total_hours.toFixed(1) : formatHours(entry.total_seconds)}h total
-                  </p>
+                  <p className="text-sm text-muted-foreground">{formatStudyDuration(entry.total_seconds)} total</p>
                 </div>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-lg font-semibold">{formatHours(entry.total_seconds)}h</p>
+                <p className="text-lg font-semibold">{formatStudyDuration(entry.total_seconds)}</p>
                 <p className="text-sm text-muted-foreground">Logged time</p>
               </div>
             </div>

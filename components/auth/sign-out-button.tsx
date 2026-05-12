@@ -1,5 +1,6 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -38,6 +39,7 @@ export function SignOutButton({ variant = "ghost", size = "sm", className }: Sig
     <div>
       <Button variant={variant} size={size} className={className} onClick={handleSignOut} disabled={isPending}>
         {isPending ? "Signing out..." : "Log out"}
+        {!isPending ? <LogOut className="ml-2 h-4 w-4" aria-hidden="true" /> : null}
       </Button>
       {error ? <p className="mt-2 text-xs text-red-500">{error}</p> : null}
     </div>

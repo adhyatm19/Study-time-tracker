@@ -15,5 +15,5 @@ export default async function AuthenticatedLayout({
   const { supabase, user } = await getUserOrRedirect();
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
-  return <AppShell email={user.email ?? ""} profile={(profile ?? getProfileFallback(user)) as ProfileRow}>{children}</AppShell>;
+  return <AppShell profile={(profile ?? getProfileFallback(user)) as ProfileRow}>{children}</AppShell>;
 }

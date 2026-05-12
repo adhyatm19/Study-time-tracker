@@ -1,28 +1,20 @@
 "use client";
 
-import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { Button } from "@/components/shared/button";
 
 export function UserMenu({
-  displayName,
-  email
+  displayName
 }: {
   displayName: string;
-  email: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="hidden rounded-full border border-border/70 bg-background/70 px-3 py-2 text-right md:block">
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="hidden items-center gap-2 rounded-full px-4 py-2 text-right md:flex">
         <p className="text-sm font-medium">{displayName}</p>
-        <p className="text-xs text-muted-foreground">{email}</p>
+        <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
       </div>
-      <Link href="/settings">
-        <Button variant="outline" size="sm">
-          Settings
-        </Button>
-      </Link>
       <SignOutButton />
     </div>
   );

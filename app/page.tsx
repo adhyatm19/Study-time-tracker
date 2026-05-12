@@ -24,7 +24,7 @@ export default async function LandingPage() {
             <p className="mb-5 inline-flex rounded-full border border-border/70 bg-background/80 px-4 py-2 text-sm text-muted-foreground shadow-soft">
               Private study tracking for close-knit friend groups
             </p>
-            <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">
+            <h1 className="text-5xl font-semibold sm:text-6xl">
               {APP_NAME} keeps your focus visible without turning it into a game.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
@@ -64,7 +64,7 @@ export default async function LandingPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Free stopwatch</p>
-                    <p className="mt-2 text-4xl font-semibold tracking-tight">02:14:27</p>
+                    <p className="mt-2 text-4xl font-semibold">02:14:27</p>
                   </div>
                   <div className="rounded-full border border-border/70 bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
                     Rain ambience

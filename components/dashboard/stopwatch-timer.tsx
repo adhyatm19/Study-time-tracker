@@ -1,13 +1,14 @@
 "use client";
 
+import { Pause, Play, RotateCcw, Square, TimerIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/shared/button";
-import { CardDescription } from "@/components/shared/card";
 import { initialStopwatchState, STOPWATCH_STORAGE_KEY, type StopwatchTimerState, getElapsedSeconds } from "@/lib/timers";
 import { saveStudySession } from "@/lib/study-sessions";
 import { formatClock, formatDuration } from "@/lib/utils";
 import { type Database } from "@/types/database";
+import { useFloatingTimer } from "@/components/dashboard/use-floating-timer";
 
 type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
 
@@ -76,6 +77,12 @@ export function StopwatchTimer({
   }, [state.status]);
 
   const elapsedSeconds = useMemo(() => getElapsedSeconds(state, nowMs), [nowMs, state]);
+  const { openFloatingTimer, floatingTimerMessage } = useFloatingTimer({
+    mode: "stopwatch",
+    status: state.status,
+    seconds: elapsedSeconds,
+    rounding: "floor"
+  });
 
   async function persistSession(snapshot: StopwatchTimerState, endedAt: string, durationSeconds: number) {
     setIsSaving(true);
@@ -140,6 +147,17 @@ export function StopwatchTimer({
     });
   }
 
+  function handleDiscard() {
+    const confirmed = window.confirm("Discard this stopwatch session without saving it?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFeedback("Stopwatch session discarded.");
+    setState(initialStopwatchState);
+  }
+
   async function handleStop() {
     const endedAt = new Date();
 
@@ -176,45 +194,66 @@ export function StopwatchTimer({
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Stopwatch mode</p>
-        <div className="mt-4 text-[clamp(3rem,8vw,5.5rem)] font-semibold tracking-[-0.04em]">{formatClock(elapsedSeconds)}</div>
-        <CardDescription className="mt-3 max-w-lg">
-          Real duration is calculated from timestamps, so the timer stays accurate even if the page refreshes.
-        </CardDescription>
+    <div className="flex flex-col items-center gap-6">
+      <div className="grid aspect-square w-full max-w-[22rem] place-items-center rounded-full border-[10px] border-muted bg-card/70 p-6 shadow-inner">
+        <div className="text-center">
+          <div className="mx-auto mb-5 grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
+            <TimerIcon className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">Stopwatch Mode</p>
+          <div className="mt-5 font-mono text-[clamp(2.25rem,4.8vw,3.65rem)] font-semibold leading-none">
+            {formatClock(elapsedSeconds)}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-3">
         {state.status === "idle" ? (
-          <Button size="lg" onClick={handleStart}>
+          <Button size="lg" className="min-w-32 gap-2" onClick={handleStart}>
+            <Play className="h-4 w-4 fill-current" aria-hidden="true" />
             Start
           </Button>
         ) : null}
 
         {state.status === "running" ? (
-          <Button size="lg" variant="secondary" onClick={handlePause}>
+          <Button size="lg" variant="secondary" className="min-w-32 gap-2" onClick={handlePause}>
+            <Pause className="h-4 w-4" aria-hidden="true" />
             Pause
           </Button>
         ) : null}
 
         {state.status === "paused" ? (
-          <Button size="lg" onClick={handleResume}>
+          <Button size="lg" className="min-w-32 gap-2" onClick={handleResume}>
+            <Play className="h-4 w-4 fill-current" aria-hidden="true" />
             Resume
           </Button>
         ) : null}
 
+        <Button size="lg" variant="outline" className="gap-2" onClick={() => void openFloatingTimer()}>
+          <TimerIcon className="h-4 w-4" aria-hidden="true" />
+          Float
+        </Button>
+
         {state.status !== "idle" ? (
-          <Button size="lg" variant="outline" onClick={() => void handleStop()} disabled={isSaving}>
+          <Button size="lg" variant="outline" className="gap-2" onClick={() => void handleStop()} disabled={isSaving}>
+            <Square className="h-4 w-4" aria-hidden="true" />
             {isSaving ? "Saving..." : "Stop & save"}
+          </Button>
+        ) : null}
+
+        {state.status !== "idle" ? (
+          <Button size="lg" variant="ghost" className="gap-2" onClick={handleDiscard} disabled={isSaving}>
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            Discard
           </Button>
         ) : null}
       </div>
 
-      <div className="rounded-[1.75rem] border border-border/70 bg-background/60 p-5 text-sm text-muted-foreground">
-        <p>Sessions under 60 seconds ask for confirmation before they’re stored.</p>
-        <p className="mt-2">Active stopwatch state is saved locally, so you can refresh and still resume or stop it.</p>
-      </div>
+      {floatingTimerMessage ? (
+        <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">
+          {floatingTimerMessage}
+        </div>
+      ) : null}
 
       {feedback ? (
         <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">{feedback}</div>

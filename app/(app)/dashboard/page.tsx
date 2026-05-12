@@ -5,12 +5,10 @@ import { getUserOrRedirect } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
   const { supabase, user } = await getUserOrRedirect();
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 120);
 
   const [{ data: profile }, { data: sessions }, leaderboardData] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("study_sessions").select("*").gte("started_at", cutoff.toISOString()).order("started_at", { ascending: false }),
+    supabase.from("study_sessions").select("*").order("started_at", { ascending: false }),
     fetchGroupLeaderboard(supabase, "all")
   ]);
 

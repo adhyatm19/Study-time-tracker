@@ -22,7 +22,7 @@ export function buttonStyles({
   return cn(
     "inline-flex cursor-pointer items-center justify-center rounded-full font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-55",
     variant === "primary" &&
-      "bg-foreground text-background shadow-soft hover:-translate-y-0.5 hover:opacity-95 dark:bg-accent dark:text-accent-foreground",
+      "bg-accent text-accent-foreground shadow-soft hover:-translate-y-0.5 hover:bg-accent/90",
     variant === "secondary" && "bg-muted text-foreground hover:bg-muted/80",
     variant === "ghost" && "bg-transparent text-foreground hover:bg-muted/70",
     variant === "outline" && "border border-border bg-background/70 text-foreground hover:bg-muted/50",

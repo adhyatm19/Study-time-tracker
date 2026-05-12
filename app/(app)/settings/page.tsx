@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     <div className="space-y-8">
       <section>
         <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Settings</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Shape the app around your study habits.</h1>
+        <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">Shape the app around your study habits.</h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
           Update your display name, group code, Pomodoro defaults, and audio preferences in one place.
         </p>

@@ -1,9 +1,9 @@
 "use client";
 
+import { Bell, Pause, Play, RotateCcw, Square, TimerIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/shared/button";
-import { CardDescription } from "@/components/shared/card";
 import { Input, Label } from "@/components/shared/input";
 import {
   createInitialPomodoroState,
@@ -15,8 +15,10 @@ import {
 import { saveStudySession } from "@/lib/study-sessions";
 import { formatClock, formatDuration } from "@/lib/utils";
 import { type Database } from "@/types/database";
+import { useFloatingTimer } from "@/components/dashboard/use-floating-timer";
 
 type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
+const POMODORO_NOTIFICATIONS_STORAGE_KEY = "quiet-ledger:pomodoro-notifications";
 
 interface PomodoroTimerProps {
   defaultFocusMinutes: number;
@@ -41,12 +43,29 @@ export function PomodoroTimer({
   const [isHydrated, setIsHydrated] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsSupported, setNotificationsSupported] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const transitionRef = useRef(false);
+  const phaseEndNotificationRef = useRef<string | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
     const raw = window.localStorage.getItem(POMODORO_STORAGE_KEY);
+    const supportsNotifications = "Notification" in window;
+    setNotificationsSupported(supportsNotifications);
+
+    if (supportsNotifications) {
+      const storedNotifications = window.localStorage.getItem(POMODORO_NOTIFICATIONS_STORAGE_KEY) === "true";
+      const canNotify = Notification.permission === "granted";
+      setNotificationsEnabled(storedNotifications && canNotify);
+
+      if (storedNotifications && Notification.permission === "denied") {
+        window.localStorage.removeItem(POMODORO_NOTIFICATIONS_STORAGE_KEY);
+        setNotificationMessage("Notifications were blocked.");
+      }
+    }
 
     if (!raw) {
       return;
@@ -90,6 +109,74 @@ export function PomodoroTimer({
   }, [state.status]);
 
   const remainingSeconds = useMemo(() => getPomodoroRemainingSeconds(state, nowMs), [nowMs, state]);
+  const { openFloatingTimer, floatingTimerMessage } = useFloatingTimer({
+    mode: "pomodoro",
+    phase: state.phase,
+    status: state.status,
+    seconds: remainingSeconds,
+    rounding: "ceil"
+  });
+
+  useEffect(() => {
+    phaseEndNotificationRef.current = null;
+  }, [state.phase, state.phaseStartedAt]);
+
+  function notifyPhaseComplete(completedPhase: PomodoroTimerState["phase"], phaseStartedAt: string | null) {
+    if (!notificationsEnabled || typeof window === "undefined" || !("Notification" in window)) {
+      return;
+    }
+
+    if (Notification.permission !== "granted") {
+      return;
+    }
+
+    const notificationKey = `${completedPhase}:${phaseStartedAt ?? "not-started"}`;
+
+    if (phaseEndNotificationRef.current === notificationKey) {
+      return;
+    }
+
+    phaseEndNotificationRef.current = notificationKey;
+
+    try {
+      if (completedPhase === "focus") {
+        new Notification("Focus session complete", { body: "Time for a break." });
+      } else {
+        new Notification("Break complete", { body: "Time to start studying again." });
+      }
+    } catch {
+      setNotificationMessage("Notifications could not be shown.");
+    }
+  }
+
+  async function handleNotificationsClick() {
+    setNotificationMessage(null);
+
+    if (!("Notification" in window)) {
+      setNotificationsEnabled(false);
+      setNotificationMessage("Notifications are not supported in this browser.");
+      return;
+    }
+
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+      window.localStorage.removeItem(POMODORO_NOTIFICATIONS_STORAGE_KEY);
+      return;
+    }
+
+    const permission =
+      Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
+
+    if (permission === "granted") {
+      setNotificationsEnabled(true);
+      window.localStorage.setItem(POMODORO_NOTIFICATIONS_STORAGE_KEY, "true");
+      return;
+    }
+
+    setNotificationsEnabled(false);
+    window.localStorage.removeItem(POMODORO_NOTIFICATIONS_STORAGE_KEY);
+    setNotificationMessage("Notifications were blocked.");
+  }
 
   async function transitionPhase(currentState: PomodoroTimerState) {
     if (transitionRef.current) {
@@ -117,6 +204,7 @@ export function PomodoroTimer({
         });
 
         onSessionSaved(session);
+        notifyPhaseComplete("focus", currentState.phaseStartedAt);
         setFeedback(`Focus block complete. Saved ${formatDuration(pausedSnapshot.focusMinutes * 60)}.`);
         setState({
           ...pausedSnapshot,
@@ -138,6 +226,7 @@ export function PomodoroTimer({
       return;
     }
 
+    notifyPhaseComplete("break", currentState.phaseStartedAt);
     setFeedback("Break complete. Ready for the next focus block.");
     setState(createInitialPomodoroState(currentState.focusMinutes, currentState.breakMinutes));
     transitionRef.current = false;
@@ -196,6 +285,17 @@ export function PomodoroTimer({
 
   function handleReset() {
     setFeedback("Pomodoro reset.");
+    setState(createInitialPomodoroState(state.focusMinutes, state.breakMinutes));
+  }
+
+  function handleDiscard() {
+    const confirmed = window.confirm("Discard this current Pomodoro cycle without saving it?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFeedback("Pomodoro cycle discarded.");
     setState(createInitialPomodoroState(state.focusMinutes, state.breakMinutes));
   }
 
@@ -261,8 +361,8 @@ export function PomodoroTimer({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="flex flex-col items-center gap-6">
+      <div className="grid w-full gap-4 md:grid-cols-2">
         <div>
           <Label htmlFor="focusMinutes">Focus minutes</Label>
           <Input
@@ -300,44 +400,83 @@ export function PomodoroTimer({
         </div>
       </div>
 
-      <div>
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          <span className="rounded-full border border-border/70 bg-background/70 px-3 py-1.5 font-medium capitalize">
-            {state.phase} phase
-          </span>
-          <span>{state.phase === "focus" ? "Study with intention." : "Take a gentle break."}</span>
+      <div className="grid aspect-square w-full max-w-[22rem] place-items-center rounded-full border-[10px] border-muted bg-card/70 p-6 shadow-inner">
+        <div className="text-center">
+          <div className="mx-auto mb-5 grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
+            <TimerIcon className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-medium capitalize text-muted-foreground">{state.phase} Phase</p>
+          <div className="mt-5 font-mono text-[clamp(2.25rem,4.8vw,3.65rem)] font-semibold leading-none">
+            {formatClock(remainingSeconds)}
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            {state.phase === "focus" ? "Study with intention." : "Take a gentle break."}
+          </p>
         </div>
-        <div className="mt-4 text-[clamp(3rem,8vw,5.5rem)] font-semibold tracking-[-0.04em]">
-          {formatClock(remainingSeconds)}
-        </div>
-        <CardDescription className="mt-3 max-w-lg">
-          Completed focus blocks save automatically. Breaks never create sessions, and the current cycle survives a refresh.
-        </CardDescription>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-3">
         {(state.status === "idle" || state.status === "paused") && (
-          <Button size="lg" onClick={handleStart}>
+          <Button size="lg" className="min-w-32 gap-2" onClick={handleStart}>
+            <Play className="h-4 w-4 fill-current" aria-hidden="true" />
             {state.status === "paused" ? "Resume" : "Start"}
           </Button>
         )}
 
         {state.status === "running" && (
-          <Button size="lg" variant="secondary" onClick={handlePause}>
+          <Button size="lg" variant="secondary" className="min-w-32 gap-2" onClick={handlePause}>
+            <Pause className="h-4 w-4" aria-hidden="true" />
             Pause
           </Button>
         )}
 
+        <Button size="lg" variant="outline" className="gap-2" onClick={() => void openFloatingTimer()}>
+          <TimerIcon className="h-4 w-4" aria-hidden="true" />
+          Float
+        </Button>
+
         {(state.status === "running" || state.status === "paused") && (
-          <Button size="lg" variant="outline" onClick={() => void handleStopAndSave()} disabled={isSaving}>
+          <Button size="lg" variant="outline" className="gap-2" onClick={() => void handleStopAndSave()} disabled={isSaving}>
+            <Square className="h-4 w-4" aria-hidden="true" />
             {state.phase === "focus" ? (isSaving ? "Saving..." : "Stop & save") : "End break"}
           </Button>
         )}
 
-        <Button size="lg" variant="ghost" onClick={handleReset}>
+        <Button size="lg" variant="ghost" className="gap-2" onClick={handleReset}>
+          <RotateCcw className="h-4 w-4" aria-hidden="true" />
           Reset
         </Button>
+
+        {(state.status === "running" || state.status === "paused") && (
+          <Button size="lg" variant="ghost" className="gap-2" onClick={handleDiscard} disabled={isSaving}>
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            Discard
+          </Button>
+        )}
+
+        <Button
+          size="lg"
+          variant="outline"
+          className="gap-2"
+          onClick={() => void handleNotificationsClick()}
+          disabled={!notificationsSupported}
+        >
+          <Bell className="h-4 w-4" aria-hidden="true" />
+          {notificationsEnabled ? "Notifications enabled" : "Enable notifications"}
+        </Button>
       </div>
+
+      {floatingTimerMessage ? (
+        <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">
+          {floatingTimerMessage}
+        </div>
+      ) : null}
+
+      {notificationMessage ? (
+        <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">
+          {notificationMessage}
+        </div>
+      ) : null}
 
       {feedback ? (
         <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">{feedback}</div>

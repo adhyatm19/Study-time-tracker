@@ -5,18 +5,18 @@
 :root {
   --font-sans: "Avenir Next", "Avenir", "SF Pro Display", "Segoe UI", sans-serif;
   --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-  --background: 40 24% 96%;
-  --foreground: 30 16% 17%;
+  --background: 42 30% 97%;
+  --foreground: 32 15% 15%;
   --card: 0 0% 100%;
-  --border: 32 18% 84%;
-  --muted: 36 18% 91%;
-  --muted-foreground: 28 11% 42%;
-  --accent: 150 20% 42%;
+  --border: 38 18% 88%;
+  --muted: 140 16% 93%;
+  --muted-foreground: 30 8% 43%;
+  --accent: 151 31% 31%;
   --accent-foreground: 0 0% 100%;
-  --ring: 150 20% 52%;
-  --chart-primary: 152 23% 45%;
-  --chart-secondary: 32 42% 62%;
-  --chart-grid: 32 18% 82%;
+  --ring: 151 31% 41%;
+  --chart-primary: 151 31% 36%;
+  --chart-secondary: 38 42% 58%;
+  --chart-grid: 38 18% 84%;
 }
 
 .dark {
@@ -46,8 +46,8 @@ body {
   min-height: 100svh;
   font-family: var(--font-sans);
   background:
-    radial-gradient(circle at top left, rgba(177, 201, 182, 0.24), transparent 28%),
-    radial-gradient(circle at top right, rgba(217, 196, 168, 0.2), transparent 24%),
+    radial-gradient(circle at top left, rgba(197, 218, 201, 0.28), transparent 28%),
+    radial-gradient(circle at top right, rgba(232, 222, 205, 0.28), transparent 25%),
     linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
   color: hsl(var(--foreground));
   font-feature-settings: "ss01", "cv02", "cv03";
@@ -71,8 +71,8 @@ a {
 }
 
 .card-surface {
-  background: color-mix(in srgb, hsl(var(--card)) 92%, white 8%);
-  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, hsl(var(--card)) 94%, white 6%);
+  backdrop-filter: blur(18px);
 }
 
 .dark .card-surface {

@@ -21,7 +21,7 @@ export default async function SignUpPage() {
         <div className="grid w-full gap-10 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="max-w-xl self-center">
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Sign up</p>
-            <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="mt-6 text-4xl font-semibold sm:text-5xl">
               Start a quiet accountability loop with your study group.
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">

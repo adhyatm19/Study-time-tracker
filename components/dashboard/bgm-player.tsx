@@ -1,10 +1,11 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Music2, Play, Volume2 } from "lucide-react";
 
-import { CardDescription } from "@/components/shared/card";
-import { Label, Select } from "@/components/shared/input";
-import { AUDIO_TRACKS, BGM_OPTIONS } from "@/lib/constants";
+import { Card, CardDescription, CardTitle } from "@/components/shared/card";
+import { AUDIO_TRACKS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { type Database } from "@/types/database";
 
 type BgmOption = Database["public"]["Tables"]["profiles"]["Row"]["preferred_bgm"];
@@ -22,11 +23,54 @@ interface BgmPlayerProps {
   onVolumeChange: (value: number) => void;
 }
 
+const FILTERS = ["All", "Focus", "Nature", "Rain"] as const;
+
+const TRACK_CARDS: Array<{
+  value: BgmOption;
+  label: string;
+  category: (typeof FILTERS)[number];
+  detail: string;
+  swatch: string;
+}> = [
+  {
+    value: "off",
+    label: "Off",
+    category: "All",
+    detail: "Silence for deep work",
+    swatch: "from-stone-200 to-stone-100 dark:from-stone-700 dark:to-stone-800"
+  },
+  {
+    value: "white-noise",
+    label: "Lo-fi Focus",
+    category: "Focus",
+    detail: "Soft texture to keep you in the zone",
+    swatch: "from-emerald-900 to-stone-500 dark:from-emerald-700 dark:to-stone-900"
+  },
+  {
+    value: "fireplace",
+    label: "Warm Fireplace",
+    category: "Nature",
+    detail: "Gentle warmth for longer sessions",
+    swatch: "from-amber-800 to-stone-600 dark:from-amber-700 dark:to-stone-950"
+  },
+  {
+    value: "rain",
+    label: "Rainy Day",
+    category: "Rain",
+    detail: "Rainfall ambience for focused study",
+    swatch: "from-slate-500 to-emerald-900 dark:from-slate-500 dark:to-emerald-950"
+  }
+];
+
 export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function BgmPlayer(
   { track, volume, shouldPlay, onTrackChange, onVolumeChange },
   ref
 ) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [activeFilter, setActiveFilter] = useState<(typeof FILTERS)[number]>("All");
+  const visibleTracks = TRACK_CARDS.filter(
+    (trackCard) => activeFilter === "All" || trackCard.category === activeFilter || trackCard.value === "off"
+  );
 
   function syncSource() {
     const audio = audioRef.current;
@@ -101,45 +145,80 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
   }, [shouldPlay, track]);
 
   return (
-    <div className="space-y-4 rounded-[1.75rem] border border-border/70 bg-background/60 p-5">
-      <div className="flex items-center justify-between gap-4">
+    <Card className="space-y-4 rounded-[1.35rem] p-5">
+      <div className="flex items-center gap-3">
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
+          <Music2 className="h-5 w-5" aria-hidden="true" />
+        </div>
         <div>
-          <p className="text-sm font-medium">Ambient BGM</p>
-          <CardDescription className="mt-1">Audio only plays while a focus session is actively running.</CardDescription>
+          <CardTitle>Ambient Music</CardTitle>
+          <CardDescription className="mt-1">Plays while a focus session is running.</CardDescription>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-        <div>
-          <Label htmlFor="bgmTrack">Sound</Label>
-          <Select id="bgmTrack" value={track} onChange={(event) => onTrackChange(event.target.value as BgmOption)}>
-            {BGM_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-        </div>
+      <div className="flex gap-1 overflow-x-auto rounded-full bg-muted p-1">
+        {FILTERS.map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => setActiveFilter(filter)}
+            className={cn(
+              "shrink-0 rounded-full px-4 py-2 text-xs font-medium transition",
+              activeFilter === filter ? "bg-accent text-accent-foreground shadow-sm" : "text-foreground hover:bg-card/70"
+            )}
+          >
+            {filter}
+          </button>
+        ))}
+      </div>
 
-        <div>
-          <Label htmlFor="bgmVolume">Volume</Label>
-          <div className="flex h-[52px] items-center gap-3 rounded-3xl border border-border/80 bg-background/80 px-4">
-            <input
-              id="bgmVolume"
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={volume}
-              onChange={(event) => onVolumeChange(Number(event.target.value))}
-              className="w-32 accent-[hsl(var(--accent))]"
-            />
-            <span className="w-10 text-right text-sm text-muted-foreground">{Math.round(volume * 100)}%</span>
-          </div>
-        </div>
+      <div className="divide-y divide-border/70">
+        {visibleTracks.map((trackCard) => {
+          const isSelected = track === trackCard.value;
+
+          return (
+            <button
+              key={trackCard.value}
+              type="button"
+              onClick={() => onTrackChange(trackCard.value)}
+              className="flex w-full items-center gap-3 py-3 text-left"
+            >
+              <div className={cn("h-12 w-14 shrink-0 rounded-xl bg-gradient-to-br shadow-sm", trackCard.swatch)} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{trackCard.label}</p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">{trackCard.detail}</p>
+              </div>
+              <span
+                className={cn(
+                  "grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border bg-background text-accent",
+                  isSelected && "bg-accent text-accent-foreground"
+                )}
+                aria-label={isSelected ? "Selected sound" : "Select sound"}
+              >
+                <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3">
+        <Volume2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <input
+          id="bgmVolume"
+          type="range"
+          min={0}
+          max={1}
+          step={0.05}
+          value={volume}
+          onChange={(event) => onVolumeChange(Number(event.target.value))}
+          className="min-w-0 flex-1 accent-[hsl(var(--accent))]"
+          aria-label="Ambient audio volume"
+        />
+        <span className="w-10 text-right text-sm text-muted-foreground">{Math.round(volume * 100)}%</span>
       </div>
 
       <audio ref={audioRef} preload="auto" />
-    </div>
+    </Card>
   );
 });

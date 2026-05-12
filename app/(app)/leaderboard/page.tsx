@@ -33,7 +33,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams?:
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr] xl:items-end">
         <div>
           <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Leaderboard</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">See how your group is pacing together.</h1>
+          <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">See how your group is pacing together.</h1>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
             Only people sharing your group code appear here. Switch the range to compare today, this week, this month, or all time.
           </p>
