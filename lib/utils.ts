@@ -78,7 +78,7 @@ export function getDateRange(days: number) {
   return { start, end };
 }
 
-function toLocalDateKey(value: string | Date) {
+export function toLocalDateKey(value: string | Date) {
   const date = new Date(value);
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -180,6 +180,37 @@ export function calculateCurrentStreak(sessions: SessionRow[]) {
   }
 
   return streak;
+}
+
+export function calculateBestStreak(sessions: SessionRow[]) {
+  const activeDays = Array.from(
+    new Set(
+      sessions
+        .filter((session) => session.duration_seconds > 0)
+        .map((session) => toLocalDateKey(session.started_at))
+    )
+  ).sort();
+
+  let bestStreak = 0;
+  let currentStreak = 0;
+  let previousDate: Date | null = null;
+
+  activeDays.forEach((dayKey) => {
+    const currentDate = new Date(`${dayKey}T00:00:00`);
+
+    if (previousDate) {
+      const nextExpected = new Date(previousDate);
+      nextExpected.setDate(previousDate.getDate() + 1);
+      currentStreak = toLocalDateKey(nextExpected) === dayKey ? currentStreak + 1 : 1;
+    } else {
+      currentStreak = 1;
+    }
+
+    bestStreak = Math.max(bestStreak, currentStreak);
+    previousDate = currentDate;
+  });
+
+  return bestStreak;
 }
 
 export function calculateRangeTotal(sessions: SessionRow[], range: "today" | "week" | "month" | "all") {

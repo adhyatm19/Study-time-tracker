@@ -105,8 +105,8 @@ export function TodoList() {
           className="h-11 rounded-xl py-2"
           aria-label="Add a task"
         />
-        <Button className="h-11 w-11 shrink-0 px-0" aria-label="Add task">
-          <Plus className="h-5 w-5" aria-hidden="true" />
+        <Button type="submit" className="h-12 w-12 shrink-0 px-0" aria-label="Add task">
+          <Plus className="h-7 w-7" strokeWidth={3} aria-hidden="true" />
         </Button>
       </form>
 

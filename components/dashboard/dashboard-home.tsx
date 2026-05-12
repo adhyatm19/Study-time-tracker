@@ -10,10 +10,12 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { TimerCard } from "@/components/dashboard/timer-card";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { type LeaderboardEntry } from "@/lib/leaderboard";
+import { calculateRangeTotal, toLocalDateKey } from "@/lib/utils";
 import { type Database } from "@/types/database";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
+const TODAY_GOAL_STORAGE_KEY = "quiet-ledger:today-goal:v1";
 
 interface DashboardHomeProps {
   currentUserId: string;
@@ -30,10 +32,33 @@ export function DashboardHome({
 }: DashboardHomeProps) {
   const [sessions, setSessions] = useState(initialSessions);
   const [showFocusTip, setShowFocusTip] = useState(true);
+  const [todayGoalSeconds, setTodayGoalSeconds] = useState<number | null>(null);
 
   useEffect(() => {
     setSessions(initialSessions);
   }, [initialSessions]);
+
+  useEffect(() => {
+    const todayKey = toLocalDateKey(new Date());
+    const raw = window.localStorage.getItem(TODAY_GOAL_STORAGE_KEY);
+
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { date?: string; seconds?: number };
+
+      if (parsed.date === todayKey && typeof parsed.seconds === "number" && parsed.seconds > 0) {
+        setTodayGoalSeconds(parsed.seconds);
+        return;
+      }
+
+      window.localStorage.removeItem(TODAY_GOAL_STORAGE_KEY);
+    } catch {
+      window.localStorage.removeItem(TODAY_GOAL_STORAGE_KEY);
+    }
+  }, []);
 
   const sortedSessions = useMemo(
     () =>
@@ -42,6 +67,7 @@ export function DashboardHome({
       ),
     [sessions]
   );
+  const todayStudySeconds = useMemo(() => calculateRangeTotal(sortedSessions, "today"), [sortedSessions]);
 
   function handleSessionSaved(session: StudySessionRow) {
     setSessions((current) => [session, ...current]);
@@ -49,6 +75,20 @@ export function DashboardHome({
 
   function handleSessionDeleted(sessionId: string) {
     setSessions((current) => current.filter((session) => session.id !== sessionId));
+  }
+
+  function handleTodayGoalChange(goalSeconds: number | null) {
+    setTodayGoalSeconds(goalSeconds);
+
+    if (goalSeconds && goalSeconds > 0) {
+      window.localStorage.setItem(
+        TODAY_GOAL_STORAGE_KEY,
+        JSON.stringify({ date: toLocalDateKey(new Date()), seconds: goalSeconds })
+      );
+      return;
+    }
+
+    window.localStorage.removeItem(TODAY_GOAL_STORAGE_KEY);
   }
 
   return (
@@ -80,9 +120,15 @@ export function DashboardHome({
         </Card>
       </section>
 
-      <StatsCards sessions={sortedSessions} />
+      <StatsCards sessions={sortedSessions} todayGoalSeconds={todayGoalSeconds} />
 
-      <TimerCard profile={profile} onSessionSaved={handleSessionSaved} />
+      <TimerCard
+        profile={profile}
+        onSessionSaved={handleSessionSaved}
+        todayGoalSeconds={todayGoalSeconds}
+        todayStudySeconds={todayStudySeconds}
+        onTodayGoalChange={handleTodayGoalChange}
+      />
 
       {showFocusTip ? (
         <Card className="flex items-center gap-4 rounded-[1.1rem] bg-muted/70 p-4">
