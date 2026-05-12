@@ -46,6 +46,7 @@ export interface Database {
           ended_at: string;
           duration_seconds: number;
           mode: "stopwatch" | "pomodoro";
+          note: string | null;
           created_at: string;
         };
         Insert: {
@@ -55,6 +56,7 @@ export interface Database {
           ended_at: string;
           duration_seconds: number;
           mode: "stopwatch" | "pomodoro";
+          note?: string | null;
           created_at?: string;
         };
         Update: {
@@ -62,6 +64,7 @@ export interface Database {
           ended_at?: string;
           duration_seconds?: number;
           mode?: "stopwatch" | "pomodoro";
+          note?: string | null;
           created_at?: string;
         };
         Relationships: [];

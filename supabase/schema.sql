@@ -17,6 +17,7 @@ create table if not exists public.study_sessions (
   ended_at timestamptz not null,
   duration_seconds int not null check (duration_seconds > 0),
   mode text not null check (mode in ('stopwatch', 'pomodoro')),
+  note text,
   created_at timestamptz not null default now()
 );
 

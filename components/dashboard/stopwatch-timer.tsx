@@ -84,7 +84,12 @@ export function StopwatchTimer({
     rounding: "floor"
   });
 
-  async function persistSession(snapshot: StopwatchTimerState, endedAt: string, durationSeconds: number) {
+  async function persistSession(
+    snapshot: StopwatchTimerState,
+    endedAt: string,
+    durationSeconds: number,
+    note: string | null
+  ) {
     setIsSaving(true);
     setFeedback(null);
 
@@ -93,7 +98,8 @@ export function StopwatchTimer({
         started_at: snapshot.startedAt ?? endedAt,
         ended_at: endedAt,
         duration_seconds: durationSeconds,
-        mode: "stopwatch"
+        mode: "stopwatch",
+        note
       });
 
       onSessionSaved(session);
@@ -190,19 +196,32 @@ export function StopwatchTimer({
     }
 
     setState(snapshot);
-    await persistSession(snapshot, endedAt.toISOString(), durationSeconds);
+    const note = window.prompt("What did you study?")?.trim() ?? "";
+    await persistSession(snapshot, endedAt.toISOString(), durationSeconds, note || null);
   }
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="grid aspect-square w-full max-w-[22rem] place-items-center rounded-full border-[10px] border-muted bg-card/70 p-6 shadow-inner">
-        <div className="text-center">
-          <div className="mx-auto mb-5 grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
-            <TimerIcon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-medium text-muted-foreground">Stopwatch Mode</p>
-          <div className="mt-5 font-mono text-[clamp(2.25rem,4.8vw,3.65rem)] font-semibold leading-none">
-            {formatClock(elapsedSeconds)}
+      <div
+        className="grid aspect-square w-full max-w-[25rem] place-items-center rounded-full p-2 shadow-inner"
+        style={{
+          background:
+            "conic-gradient(hsl(var(--accent) / 0.38) 0deg 20deg, hsl(var(--muted)) 20deg 360deg)"
+        }}
+      >
+        <div className="grid h-full w-full place-items-center rounded-full bg-card/90 p-6">
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Stopwatch</p>
+            <div className="mt-4 font-mono text-5xl font-semibold leading-none sm:text-6xl">
+              {formatClock(elapsedSeconds)}
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {state.status === "running"
+                ? "Studying now"
+                : state.status === "paused"
+                  ? "Paused"
+                  : "Ready when you are"}
+            </p>
           </div>
         </div>
       </div>

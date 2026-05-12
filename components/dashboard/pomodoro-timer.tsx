@@ -7,6 +7,7 @@ import { Button } from "@/components/shared/button";
 import { Input, Label } from "@/components/shared/input";
 import {
   createInitialPomodoroState,
+  getPomodoroPhaseDurationSeconds,
   getPomodoroElapsedSeconds,
   getPomodoroRemainingSeconds,
   POMODORO_STORAGE_KEY,
@@ -109,6 +110,11 @@ export function PomodoroTimer({
   }, [state.status]);
 
   const remainingSeconds = useMemo(() => getPomodoroRemainingSeconds(state, nowMs), [nowMs, state]);
+  const elapsedSeconds = useMemo(() => getPomodoroElapsedSeconds(state, nowMs), [nowMs, state]);
+  const phaseDurationSeconds = useMemo(() => getPomodoroPhaseDurationSeconds(state), [state]);
+  const progressDegrees = phaseDurationSeconds
+    ? Math.min(360, Math.max(0, (elapsedSeconds / phaseDurationSeconds) * 360))
+    : 0;
   const { openFloatingTimer, floatingTimerMessage } = useFloatingTimer({
     mode: "pomodoro",
     phase: state.phase,
@@ -345,7 +351,8 @@ export function PomodoroTimer({
         started_at: snapshot.phaseStartedAt ?? endedAt.toISOString(),
         ended_at: endedAt.toISOString(),
         duration_seconds: durationSeconds,
-        mode: "pomodoro"
+        mode: "pomodoro",
+        note: (window.prompt("What did you study?")?.trim() ?? "") || null
       });
 
       onSessionSaved(session);
@@ -400,18 +407,24 @@ export function PomodoroTimer({
         </div>
       </div>
 
-      <div className="grid aspect-square w-full max-w-[22rem] place-items-center rounded-full border-[10px] border-muted bg-card/70 p-6 shadow-inner">
-        <div className="text-center">
-          <div className="mx-auto mb-5 grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
-            <TimerIcon className="h-5 w-5" aria-hidden="true" />
+      <div
+        className="grid aspect-square w-full max-w-[25rem] place-items-center rounded-full p-2 shadow-inner"
+        style={{
+          background: `conic-gradient(hsl(var(--accent) / ${
+            state.status === "idle" ? 0.22 : 0.72
+          }) ${progressDegrees}deg, hsl(var(--muted)) ${progressDegrees}deg 360deg)`
+        }}
+      >
+        <div className="grid h-full w-full place-items-center rounded-full bg-card/90 p-6">
+          <div className="text-center">
+            <p className="text-sm font-medium capitalize text-muted-foreground">{state.phase} phase</p>
+            <div className="mt-4 font-mono text-5xl font-semibold leading-none sm:text-6xl">
+              {formatClock(remainingSeconds)}
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {state.phase === "focus" ? "Study with intention." : "Take a gentle break."}
+            </p>
           </div>
-          <p className="text-sm font-medium capitalize text-muted-foreground">{state.phase} Phase</p>
-          <div className="mt-5 font-mono text-[clamp(2.25rem,4.8vw,3.65rem)] font-semibold leading-none">
-            {formatClock(remainingSeconds)}
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            {state.phase === "focus" ? "Study with intention." : "Take a gentle break."}
-          </p>
         </div>
       </div>
 

@@ -9,7 +9,7 @@ import {
   aggregateSessionsByDay,
   aggregateWeeklyAverage,
   calculateRangeTotal,
-  formatStudyDurationCompact
+  formatStudyDuration
 } from "@/lib/utils";
 import { type Database } from "@/types/database";
 
@@ -57,7 +57,7 @@ export function AnalyticsSection({
           </div>
           <div className="flex items-center gap-3 rounded-full border border-border/70 bg-background/70 px-5 py-3">
             <CalendarClock className="h-5 w-5 text-accent" aria-hidden="true" />
-            <p className="text-3xl font-semibold">{formatStudyDurationCompact(totalStudied)}</p>
+            <p className="text-2xl font-semibold sm:text-3xl">{formatStudyDuration(totalStudied)}</p>
           </div>
         </div>
       </Card>

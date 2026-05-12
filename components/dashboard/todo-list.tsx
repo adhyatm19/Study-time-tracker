@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CheckSquare2, GripVertical, MoreVertical, Plus, Trash2 } from "lucide-react";
+import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { Check, CheckSquare2, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/shared/button";
 import { Card, CardTitle } from "@/components/shared/card";
@@ -28,6 +28,8 @@ function createTodoId() {
 export function TodoList() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [draft, setDraft] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -86,6 +88,41 @@ export function TodoList() {
     setTodos((current) => current.filter((todo) => todo.id !== todoId));
   }
 
+  function handleStartEdit(todo: TodoItem) {
+    setEditingId(todo.id);
+    setEditDraft(todo.title);
+  }
+
+  function handleSaveEdit(todoId: string) {
+    const title = editDraft.trim();
+
+    if (!title) {
+      setEditingId(null);
+      setEditDraft("");
+      return;
+    }
+
+    setTodos((current) => current.map((todo) => (todo.id === todoId ? { ...todo, title } : todo)));
+    setEditingId(null);
+    setEditDraft("");
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null);
+    setEditDraft("");
+  }
+
+  function handleEditKeyDown(event: KeyboardEvent<HTMLInputElement>, todoId: string) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSaveEdit(todoId);
+    }
+
+    if (event.key === "Escape") {
+      handleCancelEdit();
+    }
+  }
+
   function handleClearCompleted() {
     setTodos((current) => current.filter((todo) => !todo.completed));
   }
@@ -115,35 +152,74 @@ export function TodoList() {
           todos.map((todo) => (
             <div key={todo.id} className="flex items-center gap-2 py-3">
               <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-              <button
-                type="button"
-                onClick={() => handleToggle(todo.id)}
-                className={cn(
-                  "h-4 w-4 shrink-0 rounded border transition",
-                  todo.completed ? "border-accent bg-accent" : "border-border bg-background"
-                )}
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => handleToggle(todo.id)}
+                className="h-4 w-4 shrink-0 rounded border-border accent-[hsl(var(--accent))]"
                 aria-label={todo.completed ? "Mark task incomplete" : "Mark task complete"}
               />
-              <p
-                className={cn(
-                  "min-w-0 flex-1 truncate text-sm",
-                  todo.completed && "text-muted-foreground line-through"
-                )}
-              >
-                {todo.title}
-              </p>
-              <button
-                type="button"
-                onClick={() => handleDelete(todo.id)}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                aria-label="Delete task"
-              >
-                <MoreVertical className="h-4 w-4" aria-hidden="true" />
-              </button>
+              {editingId === todo.id ? (
+                <>
+                  <Input
+                    value={editDraft}
+                    onChange={(event) => setEditDraft(event.target.value)}
+                    onKeyDown={(event) => handleEditKeyDown(event, todo.id)}
+                    className="h-10 min-w-0 flex-1 rounded-xl py-2"
+                    aria-label="Edit task"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSaveEdit(todo.id)}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-accent transition hover:bg-muted"
+                    aria-label="Save task"
+                  >
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    aria-label="Cancel edit"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-sm",
+                      todo.completed && "text-muted-foreground line-through"
+                    )}
+                  >
+                    {todo.title}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleStartEdit(todo)}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    aria-label="Edit task"
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(todo.id)}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    aria-label="Delete task"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </>
+              )}
             </div>
           ))
         ) : (
-          <div className="py-8 text-sm text-muted-foreground">No tasks yet.</div>
+          <div className="py-8 text-sm text-muted-foreground">
+            No tasks yet. Add one thing you want to finish this session.
+          </div>
         )}
       </div>
 

@@ -77,6 +77,9 @@ export function RecentSessions({ sessions, onSessionDeleted }: RecentSessionsPro
                 <p className="mt-1 text-sm text-muted-foreground">
                   {formatSessionDate(session.started_at)} · {formatDuration(session.duration_seconds)}
                 </p>
+                {session.note ? (
+                  <p className="mt-2 max-w-2xl text-sm text-foreground/80">{session.note}</p>
+                ) : null}
               </div>
 
               <Button

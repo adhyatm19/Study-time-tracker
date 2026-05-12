@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { Music2, Play, Volume2 } from "lucide-react";
+import { Check, Music2, Play, Volume2, VolumeX } from "lucide-react";
 
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { AUDIO_TRACKS } from "@/lib/constants";
@@ -71,6 +71,8 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
   const visibleTracks = TRACK_CARDS.filter(
     (trackCard) => activeFilter === "All" || trackCard.category === activeFilter || trackCard.value === "off"
   );
+  const nowPlayingTrack =
+    shouldPlay && track !== "off" ? TRACK_CARDS.find((trackCard) => trackCard.value === track) : null;
 
   function syncSource() {
     const audio = audioRef.current;
@@ -172,6 +174,12 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
         ))}
       </div>
 
+      {nowPlayingTrack ? (
+        <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-foreground">
+          Now playing: {nowPlayingTrack.label}
+        </div>
+      ) : null}
+
       <div className="divide-y divide-border/70">
         {visibleTracks.map((trackCard) => {
           const isSelected = track === trackCard.value;
@@ -181,22 +189,51 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
               key={trackCard.value}
               type="button"
               onClick={() => onTrackChange(trackCard.value)}
-              className="flex w-full items-center gap-3 py-3 text-left"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition",
+                isSelected && "border-accent/35 bg-muted/70"
+              )}
             >
-              <div className={cn("h-12 w-14 shrink-0 rounded-xl bg-gradient-to-br shadow-sm", trackCard.swatch)} />
+              <div
+                className={cn(
+                  "h-12 w-14 shrink-0 rounded-xl bg-gradient-to-br shadow-sm",
+                  trackCard.swatch,
+                  isSelected && "ring-2 ring-accent/40 ring-offset-2 ring-offset-card"
+                )}
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{trackCard.label}</p>
                 <p className="mt-1 truncate text-xs text-muted-foreground">{trackCard.detail}</p>
               </div>
-              <span
-                className={cn(
-                  "grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border bg-background text-accent",
-                  isSelected && "bg-accent text-accent-foreground"
-                )}
-                aria-label={isSelected ? "Selected sound" : "Select sound"}
-              >
-                <Play className="h-4 w-4 fill-current" aria-hidden="true" />
-              </span>
+              {trackCard.value === "off" ? (
+                <span
+                  className={cn(
+                    "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground",
+                    isSelected && "border-accent bg-accent text-accent-foreground"
+                  )}
+                  aria-label={isSelected ? "Selected sound" : "Muted sound"}
+                >
+                  <VolumeX className="h-4 w-4" aria-hidden="true" />
+                  {isSelected ? "Selected" : null}
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 text-xs font-medium text-accent",
+                    isSelected && "border-accent bg-accent text-accent-foreground"
+                  )}
+                  aria-label={isSelected ? "Selected sound" : "Select sound"}
+                >
+                  {isSelected ? (
+                    <>
+                      <Check className="h-4 w-4" aria-hidden="true" />
+                      Selected
+                    </>
+                  ) : (
+                    <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+                  )}
+                </span>
+              )}
             </button>
           );
         })}
