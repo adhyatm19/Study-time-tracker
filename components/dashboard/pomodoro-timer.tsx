@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/shared/button";
 import { Input, Label } from "@/components/shared/input";
+import { LoadingSpinner } from "@/components/shared/loading";
 import {
   createInitialPomodoroState,
   getPomodoroPhaseDurationSeconds,
@@ -428,54 +429,59 @@ export function PomodoroTimer({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
         {(state.status === "idle" || state.status === "paused") && (
-          <Button size="lg" className="min-w-32 gap-2" onClick={handleStart}>
+          <Button size="lg" className="gap-2 sm:min-w-36" onClick={handleStart}>
             <Play className="h-4 w-4 fill-current" aria-hidden="true" />
             {state.status === "paused" ? "Resume" : "Start"}
           </Button>
         )}
 
         {state.status === "running" && (
-          <Button size="lg" variant="secondary" className="min-w-32 gap-2" onClick={handlePause}>
+          <Button size="lg" className="gap-2 sm:min-w-36" onClick={handlePause}>
             <Pause className="h-4 w-4" aria-hidden="true" />
             Pause
           </Button>
         )}
 
-        <Button size="lg" variant="outline" className="gap-2" onClick={() => void openFloatingTimer()}>
-          <TimerIcon className="h-4 w-4" aria-hidden="true" />
-          Float
-        </Button>
-
         {(state.status === "running" || state.status === "paused") && (
-          <Button size="lg" variant="outline" className="gap-2" onClick={() => void handleStopAndSave()} disabled={isSaving}>
-            <Square className="h-4 w-4" aria-hidden="true" />
+          <Button
+            size="lg"
+            className="gap-2 sm:min-w-36"
+            onClick={() => void handleStopAndSave()}
+            disabled={isSaving}
+          >
+            {isSaving ? <LoadingSpinner /> : <Square className="h-4 w-4" aria-hidden="true" />}
             {state.phase === "focus" ? (isSaving ? "Saving..." : "Stop & save") : "End break"}
           </Button>
         )}
 
-        <Button size="lg" variant="ghost" className="gap-2" onClick={handleReset}>
+        <Button size="md" variant="outline" className="gap-2 sm:h-11" onClick={() => void openFloatingTimer()}>
+          <TimerIcon className="h-4 w-4" aria-hidden="true" />
+          Float
+        </Button>
+
+        <Button size="md" variant="ghost" className="gap-2 sm:h-11" onClick={handleReset}>
           <RotateCcw className="h-4 w-4" aria-hidden="true" />
           Reset
         </Button>
 
         {(state.status === "running" || state.status === "paused") && (
-          <Button size="lg" variant="ghost" className="gap-2" onClick={handleDiscard} disabled={isSaving}>
+          <Button size="md" variant="ghost" className="gap-2 sm:h-11" onClick={handleDiscard} disabled={isSaving}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Discard
           </Button>
         )}
 
         <Button
-          size="lg"
+          size="md"
           variant="outline"
-          className="gap-2"
+          className="gap-2 sm:h-11"
           onClick={() => void handleNotificationsClick()}
           disabled={!notificationsSupported}
         >
           <Bell className="h-4 w-4" aria-hidden="true" />
-          {notificationsEnabled ? "Notifications enabled" : "Enable notifications"}
+          {notificationsEnabled ? "Notifications on" : "Notify"}
         </Button>
       </div>
 

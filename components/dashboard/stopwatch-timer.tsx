@@ -4,6 +4,7 @@ import { Pause, Play, RotateCcw, Square, TimerIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/shared/button";
+import { LoadingSpinner } from "@/components/shared/loading";
 import { initialStopwatchState, STOPWATCH_STORAGE_KEY, type StopwatchTimerState, getElapsedSeconds } from "@/lib/timers";
 import { saveStudySession } from "@/lib/study-sessions";
 import { formatClock, formatDuration } from "@/lib/utils";
@@ -226,42 +227,42 @@ export function StopwatchTimer({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
         {state.status === "idle" ? (
-          <Button size="lg" className="min-w-32 gap-2" onClick={handleStart}>
+          <Button size="lg" className="gap-2 sm:min-w-36" onClick={handleStart}>
             <Play className="h-4 w-4 fill-current" aria-hidden="true" />
             Start
           </Button>
         ) : null}
 
         {state.status === "running" ? (
-          <Button size="lg" variant="secondary" className="min-w-32 gap-2" onClick={handlePause}>
+          <Button size="lg" className="gap-2 sm:min-w-36" onClick={handlePause}>
             <Pause className="h-4 w-4" aria-hidden="true" />
             Pause
           </Button>
         ) : null}
 
         {state.status === "paused" ? (
-          <Button size="lg" className="min-w-32 gap-2" onClick={handleResume}>
+          <Button size="lg" className="gap-2 sm:min-w-36" onClick={handleResume}>
             <Play className="h-4 w-4 fill-current" aria-hidden="true" />
             Resume
           </Button>
         ) : null}
 
-        <Button size="lg" variant="outline" className="gap-2" onClick={() => void openFloatingTimer()}>
+        {state.status !== "idle" ? (
+          <Button size="lg" className="gap-2 sm:min-w-36" onClick={() => void handleStop()} disabled={isSaving}>
+            {isSaving ? <LoadingSpinner /> : <Square className="h-4 w-4" aria-hidden="true" />}
+            {isSaving ? "Saving..." : "Stop & save"}
+          </Button>
+        ) : null}
+
+        <Button size="md" variant="outline" className="gap-2 sm:h-11" onClick={() => void openFloatingTimer()}>
           <TimerIcon className="h-4 w-4" aria-hidden="true" />
           Float
         </Button>
 
         {state.status !== "idle" ? (
-          <Button size="lg" variant="outline" className="gap-2" onClick={() => void handleStop()} disabled={isSaving}>
-            <Square className="h-4 w-4" aria-hidden="true" />
-            {isSaving ? "Saving..." : "Stop & save"}
-          </Button>
-        ) : null}
-
-        {state.status !== "idle" ? (
-          <Button size="lg" variant="ghost" className="gap-2" onClick={handleDiscard} disabled={isSaving}>
+          <Button size="md" variant="ghost" className="gap-2 sm:h-11" onClick={handleDiscard} disabled={isSaving}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Discard
           </Button>

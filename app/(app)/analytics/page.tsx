@@ -20,8 +20,8 @@ export default async function AnalyticsPage() {
         </p>
       </section>
 
-      <Card className="p-6">
-        <CardTitle>How to read this</CardTitle>
+      <Card className="max-w-3xl rounded-[1.35rem] bg-muted/40 p-4 shadow-none">
+        <CardTitle className="text-base">How to read this</CardTitle>
         <CardDescription className="mt-2">
           Charts are shown in hours with one decimal place, making it easy to compare short bursts and long study blocks on the same scale.
         </CardDescription>

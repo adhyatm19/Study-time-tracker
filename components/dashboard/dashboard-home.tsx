@@ -8,6 +8,8 @@ import { Leaderboard } from "@/components/dashboard/leaderboard";
 import { RecentSessions } from "@/components/dashboard/recent-sessions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { TimerCard } from "@/components/dashboard/timer-card";
+import { TodayGoalCard } from "@/components/dashboard/today-goal-card";
+import { TodoList } from "@/components/dashboard/todo-list";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { type LeaderboardEntry } from "@/lib/leaderboard";
 import { calculateRangeTotal, toLocalDateKey } from "@/lib/utils";
@@ -122,13 +124,21 @@ export function DashboardHome({
 
       <StatsCards sessions={sortedSessions} todayGoalSeconds={todayGoalSeconds} />
 
-      <TimerCard
-        profile={profile}
-        onSessionSaved={handleSessionSaved}
-        todayGoalSeconds={todayGoalSeconds}
-        todayStudySeconds={todayStudySeconds}
-        onTodayGoalChange={handleTodayGoalChange}
-      />
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)] lg:items-start">
+        <div className="h-fit self-start lg:sticky lg:top-24">
+          <TimerCard profile={profile} onSessionSaved={handleSessionSaved} />
+        </div>
+
+        <div className="space-y-4 self-start">
+          <TodayGoalCard
+            goalSeconds={todayGoalSeconds}
+            todayStudySeconds={todayStudySeconds}
+            onGoalChange={handleTodayGoalChange}
+          />
+          <TodoList />
+          <RecentSessions sessions={sortedSessions} onSessionDeleted={handleSessionDeleted} compact />
+        </div>
+      </section>
 
       {showFocusTip ? (
         <Card className="flex items-center gap-4 rounded-[1.1rem] bg-muted/70 p-4">
@@ -149,8 +159,6 @@ export function DashboardHome({
           </button>
         </Card>
       ) : null}
-
-      <RecentSessions sessions={sortedSessions} onSessionDeleted={handleSessionDeleted} />
 
       <section className="space-y-6">
         <div>

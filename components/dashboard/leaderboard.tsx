@@ -85,9 +85,20 @@ export function Leaderboard({
           const isCurrentUser = entry.user_id === currentUserId;
 
           return (
-            <div key={entry.user_id} className="flex items-center justify-between gap-4 px-6 py-4">
+            <div
+              key={entry.user_id}
+              className={cn(
+                "flex items-center justify-between gap-4 px-6 py-4 transition",
+                isCurrentUser && "bg-muted/55"
+              )}
+            >
               <div className="flex min-w-0 items-center gap-4">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border/70 bg-background/70 text-sm font-semibold">
+                <div
+                  className={cn(
+                    "grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border/70 bg-background/70 text-sm font-semibold",
+                    isCurrentUser && "border-accent/40 bg-accent/10 text-accent"
+                  )}
+                >
                   {entry.rank_number}
                 </div>
                 <div className="min-w-0">

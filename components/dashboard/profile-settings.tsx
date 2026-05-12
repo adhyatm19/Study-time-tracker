@@ -7,6 +7,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/shared/button";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { Input, Label, Select } from "@/components/shared/input";
+import { LoadingSpinner } from "@/components/shared/loading";
 import { BGM_OPTIONS } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { type Database } from "@/types/database";
@@ -51,7 +52,7 @@ export function ProfileSettings({ profile }: { profile: ProfileRow }) {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+    <div className="grid max-w-6xl gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(300px,0.55fr)]">
       <Card className="p-6">
         <CardTitle>Profile & defaults</CardTitle>
         <CardDescription className="mt-2">
@@ -122,14 +123,25 @@ export function ProfileSettings({ profile }: { profile: ProfileRow }) {
             <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">{feedback}</div>
           ) : null}
 
-          <Button size="lg" onClick={handleSave} disabled={isSaving}>
+          <Button size="lg" className="w-fit min-w-40 gap-2" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <LoadingSpinner /> : null}
             {isSaving ? "Saving..." : "Save settings"}
           </Button>
         </div>
       </Card>
 
       <div className="space-y-6">
-        <Card className="p-6">
+        <Card className="p-5">
+          <CardTitle>Account</CardTitle>
+          <CardDescription className="mt-2">
+            Sign out here or from the account menu in the navbar.
+          </CardDescription>
+          <div className="mt-5">
+            <SignOutButton variant="outline" size="md" />
+          </div>
+        </Card>
+
+        <Card className="p-5">
           <CardTitle>Audio files</CardTitle>
           <CardDescription className="mt-2">
             Place your audio files in <code className="rounded bg-muted px-2 py-1 text-xs">public/audio/</code> with the names:
@@ -141,15 +153,6 @@ export function ProfileSettings({ profile }: { profile: ProfileRow }) {
           </ul>
         </Card>
 
-        <Card className="p-6">
-          <CardTitle>Account</CardTitle>
-          <CardDescription className="mt-2">
-            Need to step away? You can sign out here and come back to the same sessions and settings later.
-          </CardDescription>
-          <div className="mt-6">
-            <SignOutButton variant="outline" size="md" />
-          </div>
-        </Card>
       </div>
     </div>
   );

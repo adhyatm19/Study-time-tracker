@@ -134,29 +134,30 @@ export function TodoList() {
         <CardTitle>Todo List</CardTitle>
       </div>
 
-      <form className="flex gap-2" onSubmit={handleAdd}>
+      <form className="flex items-center gap-2" onSubmit={handleAdd}>
         <Input
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Add a task..."
-          className="h-11 rounded-xl py-2"
+          className="h-12 rounded-2xl py-2"
           aria-label="Add a task"
         />
-        <Button type="submit" className="h-12 w-12 shrink-0 px-0" aria-label="Add task">
-          <Plus className="h-7 w-7" strokeWidth={3} aria-hidden="true" />
+        <Button type="submit" className="h-14 w-14 shrink-0 px-0 shadow-soft" aria-label="Add task">
+          <Plus className="h-7 w-7" strokeWidth={2.8} aria-hidden="true" />
         </Button>
       </form>
 
-      <div className="mt-4 divide-y divide-border/70">
+      <div className="mt-4 max-h-[22rem] overflow-y-auto pr-1">
         {todos.length ? (
-          todos.map((todo) => (
+          <div className="divide-y divide-border/70">
+            {todos.map((todo) => (
             <div key={todo.id} className="flex items-center gap-2 py-3">
-              <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
               <input
                 type="checkbox"
                 checked={todo.completed}
                 onChange={() => handleToggle(todo.id)}
-                className="h-4 w-4 shrink-0 rounded border-border accent-[hsl(var(--accent))]"
+                className="h-5 w-5 shrink-0 rounded border-border accent-[hsl(var(--accent))]"
                 aria-label={todo.completed ? "Mark task incomplete" : "Mark task complete"}
               />
               {editingId === todo.id ? (
@@ -172,7 +173,7 @@ export function TodoList() {
                   <button
                     type="button"
                     onClick={() => handleSaveEdit(todo.id)}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-accent transition hover:bg-muted"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-accent transition hover:bg-muted"
                     aria-label="Save task"
                   >
                     <Check className="h-4 w-4" aria-hidden="true" />
@@ -180,7 +181,7 @@ export function TodoList() {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     aria-label="Cancel edit"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
@@ -199,7 +200,7 @@ export function TodoList() {
                   <button
                     type="button"
                     onClick={() => handleStartEdit(todo)}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     aria-label="Edit task"
                   >
                     <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -207,7 +208,7 @@ export function TodoList() {
                   <button
                     type="button"
                     onClick={() => handleDelete(todo.id)}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     aria-label="Delete task"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -215,9 +216,10 @@ export function TodoList() {
                 </>
               )}
             </div>
-          ))
+            ))}
+          </div>
         ) : (
-          <div className="py-8 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border/80 bg-background/55 px-4 py-8 text-sm text-muted-foreground">
             No tasks yet. Add one thing you want to finish this session.
           </div>
         )}

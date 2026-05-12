@@ -7,6 +7,7 @@ import { FormEvent, useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/shared/button";
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { Input, Label } from "@/components/shared/input";
+import { LoadingSpinner } from "@/components/shared/loading";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { type Database } from "@/types/database";
 
@@ -16,6 +17,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -23,6 +25,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+    setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
@@ -32,11 +35,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
     if (!email || !password) {
       setError("Email and password are required.");
+      setIsSubmitting(false);
       return;
     }
 
     if (mode === "sign-up" && !displayName) {
       setError("Display name is required.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -48,6 +53,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
       if (signInError) {
         setError(signInError.message);
+        setIsSubmitting(false);
         return;
       }
 
@@ -71,6 +77,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
     if (signUpError) {
       setError(signUpError.message);
+      setIsSubmitting(false);
       return;
     }
 
@@ -85,6 +92,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
       if (profileError) {
         setError(profileError.message);
+        setIsSubmitting(false);
         return;
       }
 
@@ -96,7 +104,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     }
 
     setSuccess("Account created. If email confirmation is enabled, check your inbox before signing in.");
+    setIsSubmitting(false);
   }
+
+  const isBusy = isSubmitting || isPending;
 
   return (
     <Card className="mx-auto w-full max-w-lg p-8">
@@ -163,8 +174,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </div>
         ) : null}
 
-        <Button className="w-full" size="lg" type="submit" disabled={isPending}>
-          {isPending
+        <Button className="w-full gap-2" size="lg" type="submit" disabled={isBusy}>
+          {isBusy ? <LoadingSpinner /> : null}
+          {isBusy
             ? mode === "login"
               ? "Signing in..."
               : "Creating account..."

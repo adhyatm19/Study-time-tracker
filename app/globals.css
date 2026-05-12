@@ -78,3 +78,15 @@ a {
 .dark .card-surface {
   background: color-mix(in srgb, hsl(var(--card)) 90%, black 10%);
 }
+
+@keyframes page-loader {
+  0% {
+    transform: translateX(-120%);
+  }
+  55% {
+    transform: translateX(170%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}

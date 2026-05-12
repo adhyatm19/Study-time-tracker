@@ -1,5 +1,4 @@
 import { ProfileSettings } from "@/components/dashboard/profile-settings";
-import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { getProfileFallback } from "@/lib/profile";
 import { getUserOrRedirect } from "@/lib/supabase/server";
 
@@ -16,13 +15,6 @@ export default async function SettingsPage() {
           Update your display name, group code, Pomodoro defaults, and audio preferences in one place.
         </p>
       </section>
-
-      <Card className="p-6">
-        <CardTitle>Everything here is lightweight</CardTitle>
-        <CardDescription className="mt-2">
-          No paid integrations, no cluttered add-ons, just the preferences needed for a polished study MVP.
-        </CardDescription>
-      </Card>
 
       <ProfileSettings profile={profile ?? getProfileFallback(user)} />
     </div>

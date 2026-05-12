@@ -19,6 +19,7 @@ interface BgmPlayerProps {
   track: BgmOption;
   volume: number;
   shouldPlay: boolean;
+  embedded?: boolean;
   onTrackChange: (value: BgmOption) => void;
   onVolumeChange: (value: number) => void;
 }
@@ -63,7 +64,7 @@ const TRACK_CARDS: Array<{
 ];
 
 export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function BgmPlayer(
-  { track, volume, shouldPlay, onTrackChange, onVolumeChange },
+  { track, volume, shouldPlay, embedded = false, onTrackChange, onVolumeChange },
   ref
 ) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -73,6 +74,7 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
   );
   const nowPlayingTrack =
     shouldPlay && track !== "off" ? TRACK_CARDS.find((trackCard) => trackCard.value === track) : null;
+  const selectedTrack = TRACK_CARDS.find((trackCard) => trackCard.value === track);
 
   function syncSource() {
     const audio = audioRef.current;
@@ -146,19 +148,47 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
     });
   }, [shouldPlay, track]);
 
+  const Wrapper = embedded ? "div" : Card;
+
   return (
-    <Card className="space-y-4 rounded-[1.35rem] p-5">
-      <div className="flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
+    <Wrapper className={cn("space-y-4", embedded ? "rounded-2xl border border-border/70 bg-background/55 p-4" : "rounded-[1.35rem] p-5")}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-accent">
           <Music2 className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Ambient Music</CardTitle>
+            <CardDescription className="mt-0.5">
+              {nowPlayingTrack
+                ? `Now playing: ${nowPlayingTrack.label}`
+                : `Selected: ${selectedTrack?.label ?? "Off"}`}
+            </CardDescription>
+          </div>
         </div>
-        <div>
-          <CardTitle>Ambient Music</CardTitle>
-          <CardDescription className="mt-1">Plays while a focus session is running.</CardDescription>
+
+        <div className="flex items-center gap-3 rounded-full border border-border/70 bg-card/80 px-3 py-2">
+          {volume > 0 ? (
+            <Volume2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          ) : (
+            <VolumeX className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          )}
+          <input
+            id="bgmVolume"
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume}
+            onChange={(event) => onVolumeChange(Number(event.target.value))}
+            className="w-24 accent-[hsl(var(--accent))] sm:w-28"
+            aria-label="Ambient audio volume"
+          />
+          <span className="w-9 text-right text-xs text-muted-foreground">{Math.round(volume * 100)}%</span>
         </div>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto rounded-full bg-muted p-1">
+      <div className="flex gap-1 overflow-x-auto rounded-full bg-muted/80 p-1">
         {FILTERS.map((filter) => (
           <button
             key={filter}
@@ -174,13 +204,7 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
         ))}
       </div>
 
-      {nowPlayingTrack ? (
-        <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-foreground">
-          Now playing: {nowPlayingTrack.label}
-        </div>
-      ) : null}
-
-      <div className="divide-y divide-border/70">
+      <div className="grid gap-2 sm:grid-cols-2">
         {visibleTracks.map((trackCard) => {
           const isSelected = track === trackCard.value;
 
@@ -190,13 +214,13 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
               type="button"
               onClick={() => onTrackChange(trackCard.value)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition",
-                isSelected && "border-accent/35 bg-muted/70"
+                "flex w-full items-center gap-3 rounded-2xl border border-border/50 bg-card/55 px-3 py-3 text-left transition hover:bg-card",
+                isSelected && "border-accent/40 bg-muted/80"
               )}
             >
               <div
                 className={cn(
-                  "h-12 w-14 shrink-0 rounded-xl bg-gradient-to-br shadow-sm",
+                  "h-10 w-12 shrink-0 rounded-xl bg-gradient-to-br shadow-sm",
                   trackCard.swatch,
                   isSelected && "ring-2 ring-accent/40 ring-offset-2 ring-offset-card"
                 )}
@@ -208,27 +232,23 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
               {trackCard.value === "off" ? (
                 <span
                   className={cn(
-                    "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground",
+                    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs font-medium text-muted-foreground",
                     isSelected && "border-accent bg-accent text-accent-foreground"
                   )}
                   aria-label={isSelected ? "Selected sound" : "Muted sound"}
                 >
                   <VolumeX className="h-4 w-4" aria-hidden="true" />
-                  {isSelected ? "Selected" : null}
                 </span>
               ) : (
                 <span
                   className={cn(
-                    "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 text-xs font-medium text-accent",
+                    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs font-medium text-accent",
                     isSelected && "border-accent bg-accent text-accent-foreground"
                   )}
                   aria-label={isSelected ? "Selected sound" : "Select sound"}
                 >
                   {isSelected ? (
-                    <>
-                      <Check className="h-4 w-4" aria-hidden="true" />
-                      Selected
-                    </>
+                    <Check className="h-4 w-4" aria-hidden="true" />
                   ) : (
                     <Play className="h-4 w-4 fill-current" aria-hidden="true" />
                   )}
@@ -239,23 +259,7 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, BgmPlayerProps>(function Bg
         })}
       </div>
 
-      <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3">
-        <Volume2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <input
-          id="bgmVolume"
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={volume}
-          onChange={(event) => onVolumeChange(Number(event.target.value))}
-          className="min-w-0 flex-1 accent-[hsl(var(--accent))]"
-          aria-label="Ambient audio volume"
-        />
-        <span className="w-10 text-right text-sm text-muted-foreground">{Math.round(volume * 100)}%</span>
-      </div>
-
       <audio ref={audioRef} preload="auto" />
-    </Card>
+    </Wrapper>
   );
 });
