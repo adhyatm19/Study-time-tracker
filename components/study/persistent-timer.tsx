@@ -87,15 +87,15 @@ export function PersistentTimer() {
       <div
         className={
           full
-            ? "focus-panel rounded-[1.75rem] border border-border p-5 sm:p-8"
+            ? "focus-panel rounded-[22px] border border-border p-5 sm:p-6"
             : "flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft"
         }
       >
         {full ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="eyebrow">A little time. All yours.</p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Focus</h1>
+              <p className="eyebrow">A little progress, every day.</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">Focus session</h1>
             </div>
             <Button
               variant="ghost"
@@ -113,24 +113,108 @@ export function PersistentTimer() {
             <span className="ml-3 font-mono tabular-nums">{formatClock(s.seconds)}</span>
           </Link>
         )}
-        <div className={full ? "mt-4 grid gap-7" : "contents"}>
-          {full ? (
-            <div className="order-2 mx-auto w-full max-w-lg space-y-4">
-              <div className="timer-mode flex w-fit mx-auto" role="group" aria-label="Timer mode">
-                {(["stopwatch", "pomodoro"] as const).map((mode) => (
-                  <Button
-                    key={mode}
-                    variant={s.state.mode === mode ? "primary" : "ghost"}
-                    size="sm"
-                    disabled={active || s.busy || !s.ready}
-                    aria-pressed={s.state.mode === mode}
-                    onClick={() => s.configure({ mode })}
-                    className="capitalize"
+        <div className={full ? "focus-layout" : "contents"}>
+          <div className={full ? "focus-clock" : "flex flex-wrap items-center gap-2"}>
+            {full ? (
+              <>
+                <div className="timer-mode flex w-fit mx-auto" role="group" aria-label="Timer mode">
+                  {(["stopwatch", "pomodoro"] as const).map((mode) => (
+                    <Button
+                      key={mode}
+                      variant={s.state.mode === mode ? "primary" : "ghost"}
+                      size="sm"
+                      disabled={active || s.busy || !s.ready}
+                      aria-pressed={s.state.mode === mode}
+                      onClick={() => s.configure({ mode })}
+                      className="capitalize"
+                    >
+                      {mode}
+                    </Button>
+                  ))}
+                </div>
+                <div className="timer-orbit text-center">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {pending
+                      ? "Waiting to save"
+                      : s.state.mode === "pomodoro"
+                        ? `${s.state.phase} · ${s.state.status}`
+                        : s.state.status === "idle"
+                          ? "Ready when you are"
+                          : s.state.status}
+                  </p>
+                  <p
+                    role="timer"
+                    aria-label={s.state.mode === "pomodoro" ? "Time remaining" : "Elapsed study time"}
+                    className="timer-digits my-2"
                   >
-                    {mode}
-                  </Button>
-                ))}
+                    {formatClock(s.seconds)}
+                  </p>
+                  {s.state.mode === "pomodoro" ? (
+                    <div
+                      role="progressbar"
+                      aria-label="Current phase progress"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(s.progress)}
+                      className="mt-2 h-1 w-40 overflow-hidden rounded-full bg-muted"
+                    >
+                      <div className="h-full bg-accent" style={{ width: `${s.progress}%` }} />
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+            <div className="flex flex-wrap justify-center gap-2">
+              {primary}
+              {active ? (
+                <Button size="lg" variant="outline" onClick={s.finish} disabled={s.busy || !s.ready}>
+                  {pending ? "Review save" : s.state.phase === "break" ? "End break" : "Finish"}
+                </Button>
+              ) : null}
+            </div>
+            {full ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  disabled={!active || !s.ready}
+                  onClick={() => void s.openFloatingTimer()}
+                >
+                  <Timer size={16} />
+                  Floating timer
+                </Button>
+                <details className="relative">
+                  <summary
+                    aria-label="More timer options"
+                    className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full hover:bg-muted"
+                  >
+                    <MoreHorizontal size={20} />
+                  </summary>
+                  <div className="native-popover absolute right-0 z-30 mt-2 w-56 rounded-xl border border-border/60 bg-card p-2">
+                    <Button
+                      className="w-full"
+                      variant="ghost"
+                      onClick={() => void s.toggleNotifications()}
+                      aria-pressed={s.notifications}
+                    >
+                      {s.notifications ? "Disable reminders" : "Enable reminders"}
+                    </Button>
+                    <Button
+                      className="w-full text-red-700 dark:text-red-300"
+                      variant="ghost"
+                      disabled={!active || s.busy || pending}
+                      onClick={() => setDiscardOpen(true)}
+                    >
+                      Discard session
+                    </Button>
+                  </div>
+                </details>
               </div>
+            ) : null}
+          </div>
+          {full ? (
+            <div className="focus-settings">
               <div>
                 <Label htmlFor="session-subject">What are you working on?</Label>
                 <Input
@@ -174,103 +258,17 @@ export function PersistentTimer() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] leading-5 text-muted-foreground">
                   Work at your own pace. Pause whenever you need to; only active time is saved.
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs leading-5 text-muted-foreground">
                 {s.ready
-                  ? "Recovered across refreshes on this browser. Saved sessions sync across devices."
+                  ? "Your timer stays here when you refresh. Saved sessions sync across devices."
                   : "Restoring your timer…"}
               </p>
             </div>
           ) : null}
-          <div
-            className={
-              full ? "order-1 flex flex-col items-center gap-3" : "flex flex-wrap items-center gap-2"
-            }
-          >
-            {full ? (
-              <div className="timer-orbit text-center">
-                <p className="mb-2 text-sm font-medium capitalize text-muted-foreground">
-                  {pending
-                    ? "Waiting to save"
-                    : s.state.mode === "pomodoro"
-                      ? `${s.state.phase} · ${s.state.status}`
-                      : s.state.status === "idle"
-                        ? "Ready when you are"
-                        : s.state.status}
-                </p>
-                <p
-                  role="timer"
-                  aria-label={s.state.mode === "pomodoro" ? "Time remaining" : "Elapsed study time"}
-                  className="timer-digits my-3"
-                >
-                  {formatClock(s.seconds)}
-                </p>
-                {s.state.mode === "pomodoro" ? (
-                  <div
-                    role="progressbar"
-                    aria-label="Current phase progress"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(s.progress)}
-                    className="mt-2 h-1 w-40 overflow-hidden rounded-full bg-muted"
-                  >
-                    <div className="h-full bg-accent" style={{ width: `${s.progress}%` }} />
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            <div className="flex flex-wrap justify-center gap-2">
-              {primary}
-              {active ? (
-                <Button size="lg" variant="outline" onClick={s.finish} disabled={s.busy || !s.ready}>
-                  {pending ? "Review save" : s.state.phase === "break" ? "End break" : "Finish"}
-                </Button>
-              ) : null}
-            </div>
-            {full ? (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  disabled={!active || !s.ready}
-                  onClick={() => void s.openFloatingTimer()}
-                >
-                  <Timer size={16} />
-                  Floating timer
-                </Button>
-                <details className="relative">
-                  <summary
-                    aria-label="More timer options"
-                    className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full hover:bg-muted"
-                  >
-                    <MoreHorizontal size={20} />
-                  </summary>
-                  <div className="absolute right-0 z-30 mt-2 w-56 rounded-2xl border border-border bg-card p-2 shadow-lifted">
-                    <Button
-                      className="w-full"
-                      variant="ghost"
-                      onClick={() => void s.toggleNotifications()}
-                      aria-pressed={s.notifications}
-                    >
-                      {s.notifications ? "Disable reminders" : "Enable reminders"}
-                    </Button>
-                    <Button
-                      className="w-full text-red-700 dark:text-red-300"
-                      variant="ghost"
-                      disabled={!active || s.busy || pending}
-                      onClick={() => setDiscardOpen(true)}
-                    >
-                      Discard session
-                    </Button>
-                  </div>
-                </details>
-              </div>
-            ) : null}
-          </div>
         </div>
         {!s.ready && s.message?.startsWith("Saved timer data") ? (
           <div className="mt-4 flex flex-wrap gap-2">
@@ -295,7 +293,7 @@ export function PersistentTimer() {
             </Button>
           </div>
         ) : null}
-        <div hidden={!full || s.focused} className="mt-6 border-t border-border/40 pt-4">
+        <div hidden={!full || s.focused} className="mt-5 border-t border-border/40 pt-3">
           <PersistentAudio />
         </div>
       </div>

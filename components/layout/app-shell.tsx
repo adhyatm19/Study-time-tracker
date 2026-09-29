@@ -28,31 +28,34 @@ function Shell({ children, profileError }: { children: ReactNode; profileError: 
       </a>
       <aside
         hidden={focused}
-        className="glass-sidebar fixed inset-y-0 left-0 z-30 hidden w-52 flex-col overflow-y-auto border-r border-border/40 px-4 py-7 lg:flex"
+        className="glass-sidebar fixed inset-y-0 left-0 z-30 hidden w-56 flex-col overflow-y-auto border-r border-border/40 px-4 py-6 lg:flex"
       >
-        <Link href="/dashboard" className="flex items-center gap-3 font-semibold tracking-tight">
+        <Link href="/dashboard" className="flex items-center gap-3 text-[14px] font-semibold tracking-tight">
           <span className="brand-mark shrink-0">ql.</span>
           <span>
             Quiet Ledger
-            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Your focus studio</span>
+            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+              A space for your day
+            </span>
           </span>
         </Link>
-        <p className="eyebrow mb-3 mt-10 px-3">Workspace</p>
+        <p className="eyebrow mb-3 mt-10 px-3">Your workspace</p>
         <nav aria-label="Main navigation" className="space-y-1">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={path === item.href ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${path === item.href ? "bg-accent/10 font-medium text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              className={`flex items-center gap-3 rounded-[9px] px-3 py-2.5 text-[13px] transition-colors ${path === item.href ? "bg-card font-semibold text-accent shadow-sm ring-1 ring-border/40" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             >
-              <item.icon size={18} strokeWidth={1.7} aria-hidden="true" />
+              <span className="section-icon !h-7 !w-7 !rounded-lg">
+                <item.icon size={16} strokeWidth={1.8} aria-hidden="true" />
+              </span>
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="mt-auto px-3 pt-10">
-          <span className="mb-3 block h-1 w-7 rounded-full bg-accent" />
+        <div className="mt-auto px-3 pt-10 text-muted-foreground">
           <p className="text-sm font-medium">
             Small sessions.
             <br />
@@ -65,8 +68,11 @@ function Shell({ children, profileError }: { children: ReactNode; profileError: 
           </p>
         </div>
       </aside>
-      <div className={focused ? "mx-auto max-w-6xl" : "lg:ml-52 lg:pl-4"}>
-        <header hidden={focused} className="flex items-center justify-between gap-3 py-4">
+      <div className={focused ? "mx-auto max-w-6xl" : "lg:ml-56 lg:pl-5"}>
+        <header
+          hidden={focused}
+          className="flex items-center justify-between gap-3 border-b border-border/40 py-4"
+        >
           <Link href="/dashboard" className="flex items-center gap-3 font-semibold lg:hidden">
             <span className="brand-mark">ql.</span>
             <span className="hidden sm:inline">Quiet Ledger</span>
@@ -75,7 +81,7 @@ function Shell({ children, profileError }: { children: ReactNode; profileError: 
             <p className="eyebrow">
               Quiet Ledger / {nav.find((item) => item.href === path)?.label ?? "Study"}
             </p>
-            <p className="mt-1 text-sm font-medium">
+            <p className="mt-1 text-[13px] font-medium">
               Welcome back, {s.profile.display_name || "study buddy"}.
             </p>
           </div>
@@ -87,7 +93,7 @@ function Shell({ children, profileError }: { children: ReactNode; profileError: 
             />
           </div>
         </header>
-        <main id="main-content" className={focused ? "py-6" : "py-7"}>
+        <main id="main-content" className={focused ? "py-6" : "py-6"}>
           {profileError ? (
             <div role="alert" className="mb-4 rounded-xl border border-border p-4 text-sm">
               {profileError}
@@ -103,14 +109,14 @@ function Shell({ children, profileError }: { children: ReactNode; profileError: 
       <nav
         hidden={focused}
         aria-label="Mobile navigation"
-        className="glass-dock fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 grid grid-cols-5 rounded-[1.75rem] border border-border/40 p-2 lg:hidden"
+        className="glass-dock fixed inset-x-3 mx-auto max-w-lg bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 grid grid-cols-5 rounded-[22px] border border-border/40 p-2 lg:hidden"
       >
         {nav.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             aria-current={path === item.href ? "page" : undefined}
-            className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] ${path === item.href ? "bg-muted font-semibold text-accent" : "text-muted-foreground"}`}
+            className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-[14px] text-[11px] ${path === item.href ? "bg-muted font-semibold text-accent" : "text-muted-foreground"}`}
           >
             <item.icon size={19} aria-hidden="true" />
             {item.label}

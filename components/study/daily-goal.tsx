@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { Target } from "lucide-react";
 import { useStudy } from "./study-provider";
 import { useResource } from "./use-resource";
 import { useSummary } from "./summary-view";
@@ -66,7 +67,12 @@ export function DailyGoal() {
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Today’s goal</h2>
+        <div className="flex items-center gap-2.5">
+          <span className="section-icon tone-green">
+            <Target size={17} aria-hidden="true" />
+          </span>
+          <h2 className="text-[15px] font-semibold tracking-tight">Today’s goal</h2>
+        </div>
         {seconds && !editing ? (
           <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             Edit
@@ -83,11 +89,11 @@ export function DailyGoal() {
             <LoadError label="Goal progress" onRetry={summary.refresh} />
           ) : (
             <>
-              <p className="text-sm">
+              <p className="text-lg font-semibold tabular-nums tracking-tight">
                 {formatDuration(studied)} of {formatDuration(seconds)}
               </p>
               <progress
-                className="h-2 w-full accent-[hsl(var(--accent))]"
+                className="h-2.5 w-full accent-[hsl(var(--accent))]"
                 max={100}
                 value={progress}
                 aria-label="Daily study goal"

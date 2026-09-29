@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const fieldStyles =
-  "w-full rounded-xl border border-border/50 bg-muted/50 px-4 py-3 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60";
+  "native-field w-full rounded-[10px] border border-border/65 bg-muted/40 px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, ...props },
@@ -32,5 +32,5 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
 );
 
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-2 block text-sm font-medium text-foreground", className)} {...props} />;
+  return <label className={cn("mb-2 block text-[13px] font-medium text-foreground", className)} {...props} />;
 }

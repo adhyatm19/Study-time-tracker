@@ -96,6 +96,9 @@ test("tasks, goals, focus mode and mobile layout", async ({ page }) => {
   await page.getByRole("button", { name: "Toggle theme" }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.screenshot({ path: "test-results/dashboard-mobile-light.png", fullPage: true });
+  await page.setViewportSize({ width: 320, height: 740 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: "test-results/dashboard-small-phone.png", fullPage: true });
 });
 test("desktop dashboard screenshot and account switch isolation", async ({ page }) => {
   await login(page);

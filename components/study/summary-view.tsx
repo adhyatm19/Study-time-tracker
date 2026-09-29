@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect } from "react";
+import { Clock3, CalendarDays, ChartNoAxesColumnIncreasing, Flame } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { parseSummary, chartDays, weeklyChart } from "@/lib/summary";
 import { useResource } from "./use-resource";
@@ -57,13 +58,24 @@ export function SummaryView({ compact = false }: { compact?: boolean }) {
             `${summary.current_streak} ${summary.current_streak === 1 ? "day" : "days"}`,
             `Best: ${summary.best_streak} ${summary.best_streak === 1 ? "day" : "days"}`
           ]
-        ].map(([label, value, note]) => (
-          <Card key={label} className="stat-card p-5">
-            <p className="eyebrow">{label}</p>
-            <p className="mt-4 text-2xl font-medium tracking-tight sm:text-3xl">{value}</p>
-            <p className="mt-2 text-xs text-muted-foreground">{note}</p>
-          </Card>
-        ))}
+        ].map(([label, value, note], index) => {
+          const Icon = [Clock3, CalendarDays, ChartNoAxesColumnIncreasing, Flame][index];
+          const tone = ["tone-blue", "tone-lilac", "tone-green", "tone-peach"][index];
+          return (
+            <Card key={label} className={`stat-card ${tone} p-4 sm:p-5`}>
+              <div className="flex items-center gap-2.5">
+                <span className="section-icon">
+                  <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
+                </span>
+                <p className="text-xs font-medium text-muted-foreground">{label}</p>
+              </div>
+              <p className="mt-3 text-2xl font-semibold tabular-nums tracking-[-0.035em] sm:text-[28px]">
+                {value}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{note}</p>
+            </Card>
+          );
+        })}
       </div>
       {!compact ? (
         <>
@@ -100,8 +112,10 @@ export function SummaryView({ compact = false }: { compact?: boolean }) {
         </>
       ) : null}
       <p className="text-xs leading-5 text-muted-foreground">
-        Dates use {summary.timezone}. Sessions crossing midnight count toward the day they started. Today’s
-        streak remains active if you studied yesterday.
+        Dates use {summary.timezone}.
+        {!compact
+          ? " Sessions crossing midnight count toward the day they started. Today’s streak remains active if you studied yesterday."
+          : ""}
       </p>
     </section>
   );

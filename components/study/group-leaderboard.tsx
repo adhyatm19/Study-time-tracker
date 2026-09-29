@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { UsersRound } from "lucide-react";
 import { useCallback, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { parseGroup } from "@/lib/summary";
@@ -29,7 +30,12 @@ export function GroupLeaderboard({ compact = false }: { compact?: boolean }) {
   if (!resource.data.group)
     return (
       <Card>
-        <h2 className="text-lg font-semibold">Study alongside your friends</h2>
+        <div className="flex items-center gap-2.5">
+          <span className="section-icon tone-blue">
+            <UsersRound size={17} aria-hidden="true" />
+          </span>
+          <h2 className="text-[15px] font-semibold tracking-tight">Study alongside your friends</h2>
+        </div>
         <p className="mt-2 text-sm text-muted-foreground">
           Create a private circle or join with an invitation.
         </p>

@@ -6,9 +6,9 @@ import { SummaryView } from "@/components/study/summary-view";
 import { GroupLeaderboard } from "@/components/study/group-leaderboard";
 export function DashboardHome() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SummaryView compact />
-      <div className="grid items-start gap-5 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid items-start gap-5 lg:grid-cols-[1.35fr_1fr]">
         <TodoList />
         <DailyGoal />
       </div>

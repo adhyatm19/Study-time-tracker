@@ -4,166 +4,330 @@
 
 :root {
   color-scheme: light;
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-serif: Georgia, serif;
-  --background: 240 11% 96%;
-  --foreground: 240 6% 12%;
+  --background: 240 12% 96%;
+  --foreground: 235 16% 16%;
   --card: 0 0% 100%;
-  --border: 240 6% 85%;
-  --muted: 240 8% 93%;
-  --muted-foreground: 240 3% 43%;
-  --accent: 211 100% 43%;
+  --border: 235 12% 84%;
+  --muted: 235 15% 94%;
+  --muted-foreground: 235 7% 43%;
+  --accent: 216 83% 46%;
   --accent-foreground: 0 0% 100%;
-  --ring: 211 100% 48%;
-  --chart-primary: 211 100% 47%;
-  --chart-secondary: 269 64% 60%;
-  --chart-grid: 240 6% 88%;
+  --ring: 216 83% 46%;
+  --chart-primary: 216 83% 49%;
+  --chart-secondary: 265 49% 58%;
+  --chart-grid: 235 12% 90%;
+  --tone-blue: 216 83% 46%;
+  --tone-lilac: 265 46% 47%;
+  --tone-green: 158 59% 29%;
+  --tone-peach: 19 75% 39%;
+  --shadow-card: 0 1px 2px hsl(235 30% 20% / 0.035), 0 5px 18px -8px hsl(235 30% 20% / 0.09);
+  --shadow-control: 0 1px 2px hsl(235 30% 20% / 0.09), 0 2px 5px hsl(235 30% 20% / 0.035);
+  --shadow-floating: 0 12px 40px -10px hsl(235 30% 15% / 0.22), 0 1px 4px hsl(235 30% 15% / 0.08);
 }
 .dark {
   color-scheme: dark;
-  --background: 240 6% 7%;
-  --foreground: 240 7% 96%;
-  --card: 240 5% 12%;
-  --border: 240 4% 25%;
-  --muted: 240 4% 18%;
-  --muted-foreground: 240 5% 67%;
-  --accent: 210 100% 65%;
-  --accent-foreground: 240 10% 7%;
-  --ring: 210 100% 65%;
-  --chart-primary: 210 100% 65%;
-  --chart-secondary: 269 80% 77%;
-  --chart-grid: 240 4% 25%;
+  --background: 235 12% 9%;
+  --foreground: 235 12% 95%;
+  --card: 235 10% 14%;
+  --border: 235 8% 31%;
+  --muted: 235 10% 19%;
+  --muted-foreground: 235 8% 69%;
+  --accent: 213 100% 68%;
+  --accent-foreground: 235 20% 11%;
+  --ring: 213 100% 68%;
+  --chart-primary: 213 100% 68%;
+  --chart-secondary: 265 68% 75%;
+  --chart-grid: 235 10% 25%;
+  --tone-blue: 213 100% 72%;
+  --tone-lilac: 265 80% 80%;
+  --tone-green: 158 50% 67%;
+  --tone-peach: 24 90% 75%;
+  --shadow-card: 0 1px 2px #00000020, 0 5px 18px -8px #00000040;
+  --shadow-control: 0 1px 2px #00000030, 0 2px 5px #00000020;
+  --shadow-floating: 0 12px 40px -10px #00000080, 0 1px 4px #00000040;
 }
-
 * {
   border-color: hsl(var(--border));
 }
-
 html {
   scroll-behavior: smooth;
+  scroll-padding-bottom: 7rem;
 }
-
 body {
   min-height: 100svh;
   font-family: var(--font-sans);
-  background:
-    radial-gradient(ellipse at 75% 0%, hsl(var(--accent) / 0.045), transparent 55%), hsl(var(--background));
+  background: hsl(var(--background));
   -webkit-font-smoothing: antialiased;
   color: hsl(var(--foreground));
-  font-feature-settings: "ss01", "cv02", "cv03";
+  font-feature-settings: "ss01";
+  letter-spacing: -0.012em;
 }
-
 a {
   color: inherit;
   text-decoration: none;
 }
-
 ::selection {
-  background: hsla(var(--accent), 0.18);
+  background: hsl(var(--accent) / 0.18);
 }
-
-.grid-overlay {
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-  background-size: 36px 36px;
-}
-
 .card-surface {
-  background: hsl(var(--card) / 0.86);
+  background: hsl(var(--card));
+  border-color: hsl(var(--border) / 0.45);
   box-shadow:
-    0 4px 24px -8px hsl(240 20% 20% / 0.06),
-    0 1px 0 hsl(var(--card)) inset;
+    var(--shadow-card),
+    0 1px 0 hsl(0 0% 100% / 0.12) inset;
 }
 .glass-sidebar {
-  background: hsl(var(--card) / 0.48);
-  backdrop-filter: blur(32px) saturate(150%);
-  -webkit-backdrop-filter: blur(32px) saturate(150%);
+  background: hsl(var(--muted) / 0.72);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  box-shadow: 1px 0 0 hsl(var(--card) / 0.6);
 }
 .glass-dock {
-  background: hsl(var(--card) / 0.82);
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  background: hsl(var(--card) / 0.88);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
   box-shadow:
-    0 8px 32px hsl(240 20% 10% / 0.12),
-    0 1px 0 hsl(var(--card)) inset;
+    var(--shadow-floating),
+    0 1px 0 hsl(0 0% 100% / 0.2) inset;
 }
 .brand-mark {
   display: grid;
   place-items: center;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 0.85rem;
-  background: linear-gradient(145deg, #69b7ff, #0071e3);
+  border-radius: 0.8rem;
+  background: linear-gradient(155deg, #70b3fa, #256de0);
   color: white;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 650;
   letter-spacing: -0.06em;
   box-shadow:
-    0 4px 12px #0071e31a,
-    0 1px 1px #ffffff66 inset;
+    0 3px 7px #2369d326,
+    0 1px 0 #ffffff66 inset,
+    0 0 0 1px #1458bb26;
+}
+.native-button {
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.native-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.native-primary {
+  background-image: linear-gradient(to bottom, #ffffff12, #00000008);
+  box-shadow:
+    0 1px 0 #ffffff26 inset,
+    0 0 0 1px #00000008 inset,
+    0 2px 5px hsl(var(--accent) / 0.16);
+}
+.native-outline {
+  box-shadow:
+    var(--shadow-control),
+    0 1px 0 hsl(var(--card) / 0.5) inset;
+}
+.native-field {
+  box-shadow: 0 1px 2px hsl(235 30% 15% / 0.035) inset;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
+}
+.native-field:hover:not(:disabled) {
+  border-color: hsl(var(--border));
+}
+.native-field:focus {
+  background: hsl(var(--card));
 }
 .focus-panel {
   position: relative;
-  background:
-    radial-gradient(ellipse at 50% 10%, hsl(var(--accent) / 0.035), transparent 60%), hsl(var(--card) / 0.94);
-  border-color: hsl(var(--border) / 0.35);
+  background: hsl(var(--card));
+  border-color: hsl(var(--border) / 0.5);
   box-shadow:
-    0 12px 50px -20px hsl(240 20% 15% / 0.12),
-    0 1px 0 hsl(var(--card)) inset;
+    var(--shadow-card),
+    0 1px 0 hsl(0 0% 100% / 0.12) inset;
+}
+.focus-layout {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.focus-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1.25rem 0.75rem 0.75rem;
+  border: 1px solid hsl(var(--tone-blue) / 0.1);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, hsl(var(--tone-blue) / 0.06), hsl(var(--tone-lilac) / 0.035));
+}
+.focus-settings {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  min-width: 0;
 }
 .timer-orbit {
   display: flex;
   width: 100%;
-  min-height: 170px;
+  min-height: 118px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 .timer-digits {
   font-variant-numeric: tabular-nums;
-  font-size: clamp(3rem, 7vw, 6.5rem);
-  font-weight: 200;
+  font-size: clamp(2.5rem, 5.2vw, 4.75rem);
+  font-weight: 450;
   line-height: 1.1;
   letter-spacing: -0.055em;
 }
 .timer-mode {
-  background: hsl(var(--muted));
-  padding: 4px;
-  border-radius: 12px;
+  background: hsl(var(--foreground) / 0.055);
+  padding: 3px;
+  border: 1px solid hsl(var(--foreground) / 0.025);
+  border-radius: 11px;
 }
 .timer-mode button {
+  min-height: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
 }
 .timer-mode button[aria-pressed="true"] {
   background: hsl(var(--card));
   color: hsl(var(--foreground));
   box-shadow:
-    0 2px 5px #00000012,
-    0 0 0 0.5px #00000006;
+    var(--shadow-control),
+    0 0 0 0.5px hsl(var(--border) / 0.35);
 }
 .eyebrow {
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 550;
   letter-spacing: 0;
   color: hsl(var(--muted-foreground));
+}
+.section-icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  color: hsl(var(--tone, var(--tone-blue)));
+  background: hsl(var(--tone, var(--tone-blue)) / 0.1);
+  box-shadow: 0 0 0 1px hsl(var(--tone, var(--tone-blue)) / 0.07) inset;
+}
+.tone-blue {
+  --tone: var(--tone-blue);
+}
+.tone-lilac {
+  --tone: var(--tone-lilac);
+}
+.tone-green {
+  --tone: var(--tone-green);
+}
+.tone-peach {
+  --tone: var(--tone-peach);
 }
 .stat-card {
   position: relative;
   overflow: hidden;
 }
+.task-row {
+  background: hsl(var(--tone-peach) / 0.045);
+  border: 1px solid hsl(var(--tone-peach) / 0.14);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px #00000003;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+.task-row:hover {
+  background: hsl(var(--tone-peach) / 0.075);
+  border-color: hsl(var(--tone-peach) / 0.3);
+}
+.task-row[data-completed="true"] {
+  background: hsl(var(--muted) / 0.5);
+  border-color: hsl(var(--border) / 0.35);
+}
+.native-dialog {
+  box-shadow:
+    var(--shadow-floating),
+    0 1px 0 hsl(var(--card)) inset;
+}
+.native-dialog::backdrop {
+  background: hsl(235 25% 10% / 0.3);
+  backdrop-filter: blur(5px);
+}
+.native-popover {
+  box-shadow: var(--shadow-floating);
+}
+.ambient-panel summary {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 44px;
+  list-style: none;
+}
+.ambient-panel summary::-webkit-details-marker {
+  display: none;
+}
+.ambient-panel[open] .ambient-chevron {
+  transform: rotate(180deg);
+}
 .landing-clock {
   transform: none;
 }
+@media (min-width: 1024px) {
+  .focus-layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
 @media (max-width: 640px) {
   .timer-digits {
-    font-size: clamp(2.5rem, 13vw, 4.5rem);
+    font-size: clamp(2.5rem, 12vw, 3.5rem);
   }
-  .timer-orbit {
-    min-height: 140px;
+  .native-field {
+    font-size: 16px;
+  }
+  .theme-switch {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+}
+@media (pointer: coarse) {
+  .timer-mode button {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-sidebar,
+  .glass-dock {
+    background: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .native-dialog::backdrop {
+    backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .card-surface,
+  .focus-panel,
+  .native-field,
+  .task-row {
+    border-color: hsl(var(--muted-foreground));
   }
 }
 

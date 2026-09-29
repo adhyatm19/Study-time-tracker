@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { History } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStudy } from "./study-provider";
 import { useResource } from "./use-resource";
@@ -192,7 +193,14 @@ export function SessionHistory({ compact = false }: { compact?: boolean }) {
   return (
     <Card className="p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{compact ? "Recent sessions" : "Your sessions"}</h2>
+        <div className="flex items-center gap-2.5">
+          <span className="section-icon tone-lilac">
+            <History size={17} aria-hidden="true" />
+          </span>
+          <h2 className="text-[15px] font-semibold tracking-tight">
+            {compact ? "Recent sessions" : "Your sessions"}
+          </h2>
+        </div>
         {compact ? (
           <Link href="/history" className="text-sm font-medium text-accent underline underline-offset-4">
             View all

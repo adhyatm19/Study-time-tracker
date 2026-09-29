@@ -52,7 +52,7 @@ export function UserMenu({
       {open ? (
         <div
           id="account-options"
-          className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-border bg-card p-3 shadow-lifted"
+          className="native-popover absolute right-0 z-50 mt-2 w-56 rounded-xl border border-border/60 bg-card p-2"
         >
           <p className="mb-2 truncate px-2 text-sm font-semibold">{displayName}</p>
           <Button

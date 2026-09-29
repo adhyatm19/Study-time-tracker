@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useState } from "react";
-import { Play, Pencil, Trash2, Check, X, Plus } from "lucide-react";
+import { Play, Pencil, Trash2, Check, X, Plus, ListTodo } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useStudy } from "@/components/study/study-provider";
 import { useResource } from "@/components/study/use-resource";
@@ -57,9 +57,19 @@ export function TodoList() {
   if (tasks.error) return <LoadError label="Tasks" onRetry={tasks.refresh} />;
   return (
     <Card className="p-5">
-      <h2 className="text-lg font-semibold">Your study plan</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Choose a task to connect it to your next session. Synced across devices.
+      <div className="flex items-center gap-2.5">
+        <span className="section-icon tone-peach">
+          <ListTodo size={17} aria-hidden="true" />
+        </span>
+        <h2 className="text-[15px] font-semibold tracking-tight">Your study plan</h2>
+        {tasks.data ? (
+          <span className="ml-auto rounded-md bg-muted px-2 py-1 text-xs tabular-nums text-muted-foreground">
+            {tasks.data.filter((task) => !task.completed).length} to do
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-3 text-[13px] leading-5 text-muted-foreground">
+        Choose one thing. Give it your attention.
       </p>
       <form
         className="mt-4 flex gap-2"
@@ -84,46 +94,44 @@ export function TodoList() {
           onChange={(e) => setDraft(e.target.value)}
           required
         />
-        <Button
-          type="submit"
-          disabled={busy || !draft.trim()}
-          aria-label="Add study task"
-          className="h-12 w-12 shrink-0 px-0"
-        >
+        <Button type="submit" disabled={busy || !draft.trim()} aria-label="Add study task" size="icon">
           <Plus size={20} />
         </Button>
       </form>
-      <div className="mt-4 max-h-96 space-y-1 overflow-y-auto">
+      <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
         {tasks.loading && !tasks.data ? <p role="status">Loading tasks…</p> : null}
         {tasks.data?.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+          <p className="rounded-xl bg-muted/50 px-4 py-6 text-center text-[13px] text-muted-foreground">
             Start with one small, achievable task.
           </p>
         ) : null}
         {tasks.data?.map((task) => (
-          <div key={task.id} className="flex items-start gap-2 border-b border-border/60 py-3">
+          <div
+            key={task.id}
+            data-completed={task.completed}
+            className="task-row flex flex-wrap items-start gap-2 px-3 py-2"
+          >
             <input
               id={`task-${task.id}`}
               type="checkbox"
               checked={task.completed}
               disabled={busy}
-              className="mt-3 h-5 w-5 shrink-0 accent-[hsl(var(--accent))]"
+              className="mt-3 h-5 w-5 shrink-0 cursor-pointer accent-[hsl(var(--accent))]"
               onChange={() =>
                 void change(() => db().from("tasks").update({ completed: !task.completed }).eq("id", task.id))
               }
             />
             <label
               htmlFor={`task-${task.id}`}
-              className={`min-w-0 flex-1 break-words py-2 text-sm ${task.completed ? "text-muted-foreground line-through" : ""}`}
+              className={`min-w-16 flex-1 break-words py-3 text-[13px] font-medium ${task.completed ? "text-muted-foreground line-through" : ""}`}
             >
               {task.title}
             </label>
             <div className="flex flex-wrap justify-end">
               {!task.completed ? (
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
-                  className="w-11 px-0"
                   aria-label={`Study ${task.title}`}
                   title="Study this task"
                   disabled={busy || s.state.status !== "idle"}
@@ -133,9 +141,8 @@ export function TodoList() {
                 </Button>
               ) : null}
               <Button
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="w-11 px-0"
                 aria-label={`Edit ${task.title}`}
                 onClick={() => {
                   setEdit(task);
@@ -145,9 +152,8 @@ export function TodoList() {
                 <Pencil size={16} />
               </Button>
               <Button
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="w-11 px-0"
                 aria-label={`Delete ${task.title}`}
                 disabled={busy || (s.state.taskId === task.id && s.state.status !== "idle")}
                 onClick={() => setRemove(task)}

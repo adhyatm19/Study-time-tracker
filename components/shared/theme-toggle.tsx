@@ -16,9 +16,9 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="outline" size="sm" aria-label="Toggle theme" className="gap-2">
+      <Button variant="outline" size="sm" aria-label="Toggle theme" className="theme-switch gap-2">
         <Moon className="h-4 w-4" aria-hidden="true" />
-        Theme
+        <span className="hidden sm:inline">Theme</span>
       </Button>
     );
   }
@@ -29,7 +29,7 @@ export function ThemeToggle() {
     <Button
       variant="outline"
       size="sm"
-      className="gap-2"
+      className="theme-switch gap-2"
       aria-label="Toggle theme"
       onClick={() => setTheme(currentTheme === "dark" ? "light" : "dark")}
     >
@@ -38,7 +38,7 @@ export function ThemeToggle() {
       ) : (
         <Moon className="h-4 w-4" aria-hidden="true" />
       )}
-      {currentTheme === "dark" ? "Light mode" : "Dark mode"}
+      <span className="hidden sm:inline">{currentTheme === "dark" ? "Light mode" : "Dark mode"}</span>
     </Button>
   );
 }

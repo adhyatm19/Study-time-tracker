@@ -35,19 +35,13 @@ export function Dialog({
         event.preventDefault();
         if (!busy) onClose();
       }}
-      className="w-[calc(100%-2rem)] max-w-lg rounded-3xl border border-border bg-card p-6 text-foreground shadow-lifted backdrop:bg-black/45"
+      className="native-dialog w-[calc(100%-2rem)] max-w-lg rounded-[22px] border border-border/60 bg-card p-6 text-foreground"
     >
       <div className="mb-5 flex items-center justify-between gap-3">
-        <h2 id={titleId} className="text-xl font-semibold">
+        <h2 id={titleId} className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
-        <Button
-          variant="ghost"
-          className="h-11 w-11 px-0"
-          aria-label="Close dialog"
-          disabled={busy}
-          onClick={onClose}
-        >
+        <Button variant="ghost" size="icon" aria-label="Close dialog" disabled={busy} onClick={onClose}>
           <X size={20} />
         </Button>
       </div>

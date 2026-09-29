@@ -1,5 +1,6 @@
 "use client";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { AudioLines, ChevronDown } from "lucide-react";
 import { Button } from "@/components/shared/button";
 import { Label, Select } from "@/components/shared/input";
 import { BGM_OPTIONS, AUDIO_TRACKS } from "@/lib/constants";
@@ -62,12 +63,18 @@ export const BgmPlayer = forwardRef<BgmPlayerHandle, Props>(function BgmPlayer(
     if (!shouldPlay) previewTimeout.current = setTimeout(() => audio.current?.pause(), 5000);
   }
   return (
-    <details className="rounded-2xl border border-border bg-background/60 p-4">
-      <summary className="cursor-pointer text-sm font-medium">
+    <details className="ambient-panel rounded-xl bg-muted/45 px-3 py-1">
+      <summary className="cursor-pointer text-[13px] font-medium">
+        <AudioLines size={17} className="text-muted-foreground" aria-hidden="true" />
         Ambient sound{" "}
         <span className="font-normal text-muted-foreground">
           · {playing ? "Playing" : track === "off" ? "Off" : "Paused"}
         </span>
+        <ChevronDown
+          size={15}
+          className="ambient-chevron ml-auto text-muted-foreground transition-transform"
+          aria-hidden="true"
+        />
       </summary>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto_1fr]">
         <div>
