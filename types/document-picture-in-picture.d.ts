@@ -13,4 +13,3 @@ interface DocumentPictureInPicture {
 interface Window {
   readonly documentPictureInPicture?: DocumentPictureInPicture;
 }
-

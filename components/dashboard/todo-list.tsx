@@ -1,244 +1,216 @@
 "use client";
-
-import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useState } from "react";
-import { Check, CheckSquare2, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
-
+import { useCallback, useState } from "react";
+import { Play, Pencil, Trash2, Check, X, Plus } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useStudy } from "@/components/study/study-provider";
+import { useResource } from "@/components/study/use-resource";
 import { Button } from "@/components/shared/button";
-import { Card, CardTitle } from "@/components/shared/card";
-import { Input } from "@/components/shared/input";
-import { cn } from "@/lib/utils";
-
-interface TodoItem {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: number;
-}
-
-const TODO_STORAGE_KEY = "quiet-ledger:todos:v1";
-
-function createTodoId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
+import { Card } from "@/components/shared/card";
+import { Input, Label } from "@/components/shared/input";
+import { Feedback, LoadError } from "@/components/shared/feedback";
+import { Dialog } from "@/components/shared/dialog";
+import { errorMessage } from "@/lib/validation";
+import type { Task } from "@/types/database";
 export function TodoList() {
-  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const s = useStudy();
   const [draft, setDraft] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState("");
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-    const raw = window.localStorage.getItem(TODO_STORAGE_KEY);
-
-    if (!raw) {
-      return;
+  const [edit, setEdit] = useState<Task | null>(null);
+  const [title, setTitle] = useState("");
+  const [remove, setRemove] = useState<Task | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    const db = createSupabaseBrowserClient();
+    const all: Task[] = [];
+    for (let from = 0; ; from += 500) {
+      const { data, error } = await db
+        .from("tasks")
+        .select("*")
+        .eq("user_id", s.profile.id)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .range(from, from + 499);
+      if (error) throw error;
+      all.push(...data);
+      if (data.length < 500) break;
     }
-
+    return all;
+  }, [s.profile.id]);
+  const tasks = useResource(load);
+  async function change(operation: () => PromiseLike<{ error: unknown }>) {
+    setBusy(true);
+    setError(null);
     try {
-      const parsed = JSON.parse(raw) as TodoItem[];
-      setTodos(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      window.localStorage.removeItem(TODO_STORAGE_KEY);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-
-    window.localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
-  }, [isHydrated, todos]);
-
-  const completedCount = useMemo(() => todos.filter((todo) => todo.completed).length, [todos]);
-
-  function handleAdd(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const title = draft.trim();
-
-    if (!title) {
-      return;
-    }
-
-    setTodos((current) => [
-      {
-        id: createTodoId(),
-        title,
-        completed: false,
-        createdAt: Date.now()
-      },
-      ...current
-    ]);
-    setDraft("");
-  }
-
-  function handleToggle(todoId: string) {
-    setTodos((current) =>
-      current.map((todo) => (todo.id === todoId ? { ...todo, completed: !todo.completed } : todo))
-    );
-  }
-
-  function handleDelete(todoId: string) {
-    setTodos((current) => current.filter((todo) => todo.id !== todoId));
-  }
-
-  function handleStartEdit(todo: TodoItem) {
-    setEditingId(todo.id);
-    setEditDraft(todo.title);
-  }
-
-  function handleSaveEdit(todoId: string) {
-    const title = editDraft.trim();
-
-    if (!title) {
-      setEditingId(null);
-      setEditDraft("");
-      return;
-    }
-
-    setTodos((current) => current.map((todo) => (todo.id === todoId ? { ...todo, title } : todo)));
-    setEditingId(null);
-    setEditDraft("");
-  }
-
-  function handleCancelEdit() {
-    setEditingId(null);
-    setEditDraft("");
-  }
-
-  function handleEditKeyDown(event: KeyboardEvent<HTMLInputElement>, todoId: string) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      handleSaveEdit(todoId);
-    }
-
-    if (event.key === "Escape") {
-      handleCancelEdit();
+      const result = await operation();
+      if (result.error) throw result.error;
+      tasks.refresh();
+      s.invalidate();
+      return true;
+    } catch (error) {
+      setError(errorMessage(error));
+      return false;
+    } finally {
+      setBusy(false);
     }
   }
-
-  function handleClearCompleted() {
-    setTodos((current) => current.filter((todo) => !todo.completed));
-  }
-
+  const db = () => createSupabaseBrowserClient();
+  if (tasks.error) return <LoadError label="Tasks" onRetry={tasks.refresh} />;
   return (
-    <Card className="rounded-[1.35rem] p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <CheckSquare2 className="h-6 w-6 text-accent" aria-hidden="true" />
-        <CardTitle>Todo List</CardTitle>
-      </div>
-
-      <form className="flex items-center gap-2" onSubmit={handleAdd}>
+    <Card className="p-5">
+      <h2 className="text-lg font-semibold">Your study plan</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Choose a task to connect it to your next session. Synced across devices.
+      </p>
+      <form
+        className="mt-4 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (draft.trim())
+            void change(() => db().from("tasks").insert({ title: draft.trim(), user_id: s.profile.id })).then(
+              (ok) => {
+                if (ok) setDraft("");
+              }
+            );
+        }}
+      >
+        <Label htmlFor="new-task" className="sr-only">
+          New study task
+        </Label>
         <Input
+          id="new-task"
+          placeholder="Add one thing to work on"
+          maxLength={200}
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Add a task..."
-          className="h-12 rounded-2xl py-2"
-          aria-label="Add a task"
+          onChange={(e) => setDraft(e.target.value)}
+          required
         />
-        <Button type="submit" className="h-14 w-14 shrink-0 px-0 shadow-soft" aria-label="Add task">
-          <Plus className="h-7 w-7" strokeWidth={2.8} aria-hidden="true" />
+        <Button
+          type="submit"
+          disabled={busy || !draft.trim()}
+          aria-label="Add study task"
+          className="h-12 w-12 shrink-0 px-0"
+        >
+          <Plus size={20} />
         </Button>
       </form>
-
-      <div className="mt-4 max-h-[22rem] overflow-y-auto pr-1">
-        {todos.length ? (
-          <div className="divide-y divide-border/70">
-            {todos.map((todo) => (
-            <div key={todo.id} className="flex items-center gap-2 py-3">
-              <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
-              <input
-                type="checkbox"
-                checked={todo.completed}
-                onChange={() => handleToggle(todo.id)}
-                className="h-5 w-5 shrink-0 rounded border-border accent-[hsl(var(--accent))]"
-                aria-label={todo.completed ? "Mark task incomplete" : "Mark task complete"}
-              />
-              {editingId === todo.id ? (
-                <>
-                  <Input
-                    value={editDraft}
-                    onChange={(event) => setEditDraft(event.target.value)}
-                    onKeyDown={(event) => handleEditKeyDown(event, todo.id)}
-                    className="h-10 min-w-0 flex-1 rounded-xl py-2"
-                    aria-label="Edit task"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleSaveEdit(todo.id)}
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-accent transition hover:bg-muted"
-                    aria-label="Save task"
-                  >
-                    <Check className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    aria-label="Cancel edit"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p
-                    className={cn(
-                      "min-w-0 flex-1 truncate text-sm",
-                      todo.completed && "text-muted-foreground line-through"
-                    )}
-                  >
-                    {todo.title}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleStartEdit(todo)}
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    aria-label="Edit task"
-                  >
-                    <Pencil className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(todo.id)}
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    aria-label="Delete task"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </>
-              )}
+      <div className="mt-4 max-h-96 space-y-1 overflow-y-auto">
+        {tasks.loading && !tasks.data ? <p role="status">Loading tasks…</p> : null}
+        {tasks.data?.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+            Start with one small, achievable task.
+          </p>
+        ) : null}
+        {tasks.data?.map((task) => (
+          <div key={task.id} className="flex items-start gap-2 border-b border-border/60 py-3">
+            <input
+              id={`task-${task.id}`}
+              type="checkbox"
+              checked={task.completed}
+              disabled={busy}
+              className="mt-3 h-5 w-5 shrink-0 accent-[hsl(var(--accent))]"
+              onChange={() =>
+                void change(() => db().from("tasks").update({ completed: !task.completed }).eq("id", task.id))
+              }
+            />
+            <label
+              htmlFor={`task-${task.id}`}
+              className={`min-w-0 flex-1 break-words py-2 text-sm ${task.completed ? "text-muted-foreground line-through" : ""}`}
+            >
+              {task.title}
+            </label>
+            <div className="flex flex-wrap justify-end">
+              {!task.completed ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-11 px-0"
+                  aria-label={`Study ${task.title}`}
+                  title="Study this task"
+                  disabled={busy || s.state.status !== "idle"}
+                  onClick={() => s.studyTask(task.id, task.title)}
+                >
+                  <Play size={16} />
+                </Button>
+              ) : null}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-11 px-0"
+                aria-label={`Edit ${task.title}`}
+                onClick={() => {
+                  setEdit(task);
+                  setTitle(task.title);
+                }}
+              >
+                <Pencil size={16} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-11 px-0"
+                aria-label={`Delete ${task.title}`}
+                disabled={busy || (s.state.taskId === task.id && s.state.status !== "idle")}
+                onClick={() => setRemove(task)}
+              >
+                <Trash2 size={16} />
+              </Button>
             </div>
-            ))}
           </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-background/55 px-4 py-8 text-sm text-muted-foreground">
-            No tasks yet. Add one thing you want to finish this session.
-          </div>
-        )}
+        ))}
       </div>
-
-      <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border/70 bg-background/70 px-3 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={handleClearCompleted}
-          disabled={!completedCount}
-          className="inline-flex items-center gap-2 disabled:opacity-50"
+      <div className="mt-3">
+        <Feedback error message={error} />
+      </div>
+      <Dialog open={!!edit} title="Edit task" busy={busy} onClose={() => setEdit(null)}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (edit && title.trim())
+              void change(() => db().from("tasks").update({ title: title.trim() }).eq("id", edit.id)).then(
+                (ok) => {
+                  if (ok) setEdit(null);
+                }
+              );
+          }}
+          className="space-y-4"
         >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-          Clear completed
-        </button>
-        <span>
-          {completedCount} of {todos.length} completed
-        </span>
-      </div>
+          <Label htmlFor="edit-task">Task name</Label>
+          <Input
+            id="edit-task"
+            value={title}
+            maxLength={200}
+            required
+            onChange={(e) => setTitle(e.target.value)}
+            autoFocus
+          />
+          <Feedback error message={error} />
+          <Button type="submit" disabled={busy || !title.trim()}>
+            <Check size={16} className="mr-2" />
+            Save changes
+          </Button>
+        </form>
+      </Dialog>
+      <Dialog open={!!remove} title="Delete task?" busy={busy} onClose={() => setRemove(null)}>
+        <p className="mb-4 text-sm">Previously saved study sessions are kept.</p>
+        <Feedback error message={error} />
+        <div className="mt-4 flex gap-2">
+          <Button variant="outline" onClick={() => setRemove(null)} disabled={busy}>
+            <X size={16} className="mr-2" />
+            Keep task
+          </Button>
+          <Button
+            disabled={busy}
+            onClick={() => {
+              if (remove)
+                void change(() => db().from("tasks").delete().eq("id", remove.id)).then((ok) => {
+                  if (ok) setRemove(null);
+                });
+            }}
+          >
+            Delete task
+          </Button>
+        </div>
+      </Dialog>
     </Card>
   );
 }

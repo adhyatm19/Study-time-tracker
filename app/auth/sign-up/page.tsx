@@ -25,7 +25,7 @@ export default async function SignUpPage() {
               Start a quiet accountability loop with your study group.
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
-              Create your account, set a shared group code, and begin tracking focused sessions with a clean,
+              Create your account, invite your study circle, and begin tracking focused sessions with a clean,
               distraction-light dashboard.
             </p>
           </div>

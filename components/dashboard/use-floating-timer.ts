@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { type PomodoroPhase } from "@/lib/timers";
+type PomodoroPhase = "focus" | "break";
 
 type FloatingTimerMode = "stopwatch" | "pomodoro";
 type FloatingTimerStatus = "idle" | "running" | "paused";
@@ -55,7 +55,11 @@ function getStatusLabel(status: FloatingTimerStatus) {
 }
 
 function isFloatingTimerSupported() {
-  return typeof window !== "undefined" && "documentPictureInPicture" in window && Boolean(window.documentPictureInPicture);
+  return (
+    typeof window !== "undefined" &&
+    "documentPictureInPicture" in window &&
+    Boolean(window.documentPictureInPicture)
+  );
 }
 
 function readThemeVariables() {

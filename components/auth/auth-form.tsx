@@ -9,7 +9,7 @@ import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { Input, Label } from "@/components/shared/input";
 import { LoadingSpinner } from "@/components/shared/loading";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { type Database } from "@/types/database";
+import { errorMessage } from "@/lib/validation";
 
 type AuthMode = "login" | "sign-up";
 
@@ -31,7 +31,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
     const displayName = String(formData.get("displayName") ?? "").trim();
-    const groupCode = String(formData.get("groupCode") ?? "").trim().toUpperCase();
 
     if (!email || !password) {
       setError("Email and password are required.");
@@ -45,66 +44,81 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       return;
     }
 
-    if (mode === "login") {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    try {
+      if (mode === "login") {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
-      if (signInError) {
-        setError(signInError.message);
-        setIsSubmitting(false);
-        return;
-      }
-
-      startTransition(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      });
-      return;
-    }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: displayName,
-          group_code: groupCode || null
+        if (signInError) {
+          setError(signInError.message);
+          setIsSubmitting(false);
+          return;
         }
+
+        startTransition(() => {
+          router.replace("/dashboard");
+          router.refresh();
+        });
+        return;
       }
-    });
 
-    if (signUpError) {
-      setError(signUpError.message);
-      setIsSubmitting(false);
-      return;
-    }
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            display_name: displayName
+          }
+        }
+      });
 
-    if (data.user && data.session) {
-      const profilePayload: Database["public"]["Tables"]["profiles"]["Insert"] = {
-        id: data.user.id,
-        display_name: displayName,
-        group_code: groupCode || null
-      };
-
-      const { error: profileError } = await supabase.from("profiles").upsert(profilePayload as never);
-
-      if (profileError) {
-        setError(profileError.message);
+      if (signUpError) {
+        setError(signUpError.message);
         setIsSubmitting(false);
         return;
       }
 
-      startTransition(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      });
+      if (data.user && data.session) {
+        startTransition(() => {
+          router.replace("/dashboard");
+          router.refresh();
+        });
+        return;
+      }
+
+      setSuccess("Account created. If email confirmation is enabled, check your inbox before signing in.");
+      setIsSubmitting(false);
+    } catch (error) {
+      setError(errorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function resend() {
+    const email = (document.getElementById("email") as HTMLInputElement | null)?.value.trim();
+    if (!email) {
+      setError("Enter your email address first.");
       return;
     }
-
-    setSuccess("Account created. If email confirmation is enabled, check your inbox before signing in.");
-    setIsSubmitting(false);
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      });
+      if (error) throw error;
+      setSuccess("If confirmation is needed, a new link will arrive in your inbox.");
+    } catch (error) {
+      setError(errorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const isBusy = isSubmitting || isPending;
@@ -112,7 +126,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   return (
     <Card className="mx-auto w-full max-w-lg p-8">
       <div className="mb-8">
-        <CardTitle className="text-2xl">{mode === "login" ? "Welcome back" : "Create your account"}</CardTitle>
+        <CardTitle className="text-2xl">
+          {mode === "login" ? "Welcome back" : "Create your account"}
+        </CardTitle>
         <CardDescription className="mt-2">
           {mode === "login"
             ? "Sign in to keep your study sessions, analytics, and leaderboard in sync."
@@ -124,13 +140,27 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         {mode === "sign-up" ? (
           <div>
             <Label htmlFor="displayName">Display name</Label>
-            <Input id="displayName" name="displayName" placeholder="Aadhya" autoComplete="nickname" />
+            <Input
+              id="displayName"
+              name="displayName"
+              placeholder="Your name"
+              autoComplete="nickname"
+              required
+              maxLength={80}
+            />
           </div>
         ) : null}
 
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
         </div>
 
         <div>
@@ -139,37 +169,27 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             id="password"
             name="password"
             type="password"
-            minLength={6}
-            placeholder="At least 6 characters"
+            minLength={mode === "sign-up" ? 8 : undefined}
+            placeholder={mode === "sign-up" ? "At least 8 characters" : "Your password"}
             autoComplete={mode === "login" ? "current-password" : "new-password"}
             required
           />
         </div>
 
-        {mode === "sign-up" ? (
-          <div>
-            <Label htmlFor="groupCode">Group code</Label>
-            <Input
-              id="groupCode"
-              name="groupCode"
-              placeholder="FOCUS-7"
-              maxLength={20}
-              autoCapitalize="characters"
-            />
-            <p className="mt-2 text-xs text-muted-foreground">
-              Use the same code as your friends to share a private leaderboard.
-            </p>
-          </div>
-        ) : null}
-
         {error ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+          <div
+            role="alert"
+            className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+          >
             {error}
           </div>
         ) : null}
 
         {success ? (
-          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <div
+            role="status"
+            className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+          >
             {success}
           </div>
         ) : null}
@@ -186,6 +206,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </Button>
       </form>
 
+      <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
+        <Link href="/auth/recovery" className="underline underline-offset-4">
+          Forgot password?
+        </Link>
+        <Button variant="ghost" size="sm" onClick={() => void resend()} disabled={isBusy}>
+          Resend verification
+        </Button>
+      </div>
       <p className="mt-6 text-sm text-muted-foreground">
         {mode === "login" ? "New here?" : "Already have an account?"}{" "}
         <Link

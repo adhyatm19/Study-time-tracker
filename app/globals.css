@@ -3,35 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: "Avenir Next", "Avenir", "SF Pro Display", "Segoe UI", sans-serif;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-  --background: 42 30% 97%;
-  --foreground: 32 15% 15%;
+  color-scheme: light;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-serif: Georgia, serif;
+  --background: 240 11% 96%;
+  --foreground: 240 6% 12%;
   --card: 0 0% 100%;
-  --border: 38 18% 88%;
-  --muted: 140 16% 93%;
-  --muted-foreground: 30 8% 43%;
-  --accent: 151 31% 31%;
+  --border: 240 6% 85%;
+  --muted: 240 8% 93%;
+  --muted-foreground: 240 3% 43%;
+  --accent: 211 100% 43%;
   --accent-foreground: 0 0% 100%;
-  --ring: 151 31% 41%;
-  --chart-primary: 151 31% 36%;
-  --chart-secondary: 38 42% 58%;
-  --chart-grid: 38 18% 84%;
+  --ring: 211 100% 48%;
+  --chart-primary: 211 100% 47%;
+  --chart-secondary: 269 64% 60%;
+  --chart-grid: 240 6% 88%;
 }
-
 .dark {
-  --background: 28 14% 9%;
-  --foreground: 36 20% 92%;
-  --card: 26 12% 12%;
-  --border: 30 11% 23%;
-  --muted: 28 10% 16%;
-  --muted-foreground: 32 10% 68%;
-  --accent: 151 22% 55%;
-  --accent-foreground: 26 16% 10%;
-  --ring: 151 22% 58%;
-  --chart-primary: 151 30% 60%;
-  --chart-secondary: 32 46% 68%;
-  --chart-grid: 30 10% 22%;
+  color-scheme: dark;
+  --background: 240 6% 7%;
+  --foreground: 240 7% 96%;
+  --card: 240 5% 12%;
+  --border: 240 4% 25%;
+  --muted: 240 4% 18%;
+  --muted-foreground: 240 5% 67%;
+  --accent: 210 100% 65%;
+  --accent-foreground: 240 10% 7%;
+  --ring: 210 100% 65%;
+  --chart-primary: 210 100% 65%;
+  --chart-secondary: 269 80% 77%;
+  --chart-grid: 240 4% 25%;
 }
 
 * {
@@ -46,9 +48,8 @@ body {
   min-height: 100svh;
   font-family: var(--font-sans);
   background:
-    radial-gradient(circle at top left, rgba(197, 218, 201, 0.28), transparent 28%),
-    radial-gradient(circle at top right, rgba(232, 222, 205, 0.28), transparent 25%),
-    linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    radial-gradient(ellipse at 75% 0%, hsl(var(--accent) / 0.045), transparent 55%), hsl(var(--background));
+  -webkit-font-smoothing: antialiased;
   color: hsl(var(--foreground));
   font-feature-settings: "ss01", "cv02", "cv03";
 }
@@ -71,12 +72,99 @@ a {
 }
 
 .card-surface {
-  background: color-mix(in srgb, hsl(var(--card)) 94%, white 6%);
-  backdrop-filter: blur(18px);
+  background: hsl(var(--card) / 0.86);
+  box-shadow:
+    0 4px 24px -8px hsl(240 20% 20% / 0.06),
+    0 1px 0 hsl(var(--card)) inset;
 }
-
-.dark .card-surface {
-  background: color-mix(in srgb, hsl(var(--card)) 90%, black 10%);
+.glass-sidebar {
+  background: hsl(var(--card) / 0.48);
+  backdrop-filter: blur(32px) saturate(150%);
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+}
+.glass-dock {
+  background: hsl(var(--card) / 0.82);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  box-shadow:
+    0 8px 32px hsl(240 20% 10% / 0.12),
+    0 1px 0 hsl(var(--card)) inset;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(145deg, #69b7ff, #0071e3);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  box-shadow:
+    0 4px 12px #0071e31a,
+    0 1px 1px #ffffff66 inset;
+}
+.focus-panel {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 10%, hsl(var(--accent) / 0.035), transparent 60%), hsl(var(--card) / 0.94);
+  border-color: hsl(var(--border) / 0.35);
+  box-shadow:
+    0 12px 50px -20px hsl(240 20% 15% / 0.12),
+    0 1px 0 hsl(var(--card)) inset;
+}
+.timer-orbit {
+  display: flex;
+  width: 100%;
+  min-height: 170px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.timer-digits {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  font-weight: 200;
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+.timer-mode {
+  background: hsl(var(--muted));
+  padding: 4px;
+  border-radius: 12px;
+}
+.timer-mode button {
+  height: 34px;
+  border-radius: 9px;
+}
+.timer-mode button[aria-pressed="true"] {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow:
+    0 2px 5px #00000012,
+    0 0 0 0.5px #00000006;
+}
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: hsl(var(--muted-foreground));
+}
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+.landing-clock {
+  transform: none;
+}
+@media (max-width: 640px) {
+  .timer-digits {
+    font-size: clamp(2.5rem, 13vw, 4.5rem);
+  }
+  .timer-orbit {
+    min-height: 140px;
+  }
 }
 
 @keyframes page-loader {
@@ -89,4 +177,46 @@ a {
   100% {
     transform: translateX(340%);
   }
+}
+
+[hidden] {
+  display: none !important;
+}
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+dialog {
+  max-height: calc(100svh - 2rem);
+  overflow-y: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+progress {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: hsl(var(--muted));
+}
+progress::-webkit-progress-bar {
+  background: hsl(var(--muted));
+  border-radius: 999px;
+}
+progress::-webkit-progress-value {
+  background: hsl(var(--accent));
+  border-radius: 999px;
+}
+progress::-moz-progress-bar {
+  background: hsl(var(--accent));
+  border-radius: 999px;
 }

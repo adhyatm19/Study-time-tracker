@@ -1,57 +1,36 @@
 "use client";
-
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { type Database } from "@/types/database";
+import type { Database, StudySession } from "@/types/database";
 
-type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
-type StudySessionInsert = Database["public"]["Tables"]["study_sessions"]["Insert"];
-
-async function getAuthenticatedUserId() {
+type Payload = Database["public"]["Tables"]["study_sessions"]["Insert"];
+export async function saveStudySession(
+  payload: Payload & { id: string },
+  ownerId: string
+): Promise<StudySession> {
   const supabase = createSupabaseBrowserClient();
   const {
-    data: { user }
+    data: { user },
+    error: authError
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("You need to be signed in to manage study sessions.");
-  }
-
-  return { supabase, userId: user.id };
-}
-
-export async function saveStudySession(
-  payload: Omit<StudySessionInsert, "id" | "user_id" | "created_at">
-): Promise<StudySessionRow> {
-  const { supabase, userId } = await getAuthenticatedUserId();
-
-  const sessionPayload: StudySessionInsert = {
-    ...payload,
-    user_id: userId
-  };
-
+  if (authError || user?.id !== ownerId)
+    throw new Error("Sign back into the account that started this session to save it.");
   const { data, error } = await supabase
-    .from("study_sessions")
-    .insert(sessionPayload as never)
-    .select()
+    .rpc("save_study_session", {
+      session_id: payload.id,
+      session_start: payload.started_at,
+      session_end: payload.ended_at,
+      seconds: payload.duration_seconds,
+      timer_mode: payload.mode,
+      session_note: payload.note ?? null,
+      session_subject: payload.subject ?? null,
+      session_task: payload.task_id ?? null
+    })
+    .abortSignal(AbortSignal.timeout(15000))
     .single();
-
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   return data;
 }
-
 export async function deleteStudySession(sessionId: string) {
-  const { supabase, userId } = await getAuthenticatedUserId();
-
-  const { error } = await supabase
-    .from("study_sessions")
-    .delete()
-    .eq("id", sessionId)
-    .eq("user_id", userId);
-
-  if (error) {
-    throw error;
-  }
+  const { error } = await createSupabaseBrowserClient().from("study_sessions").delete().eq("id", sessionId);
+  if (error) throw error;
 }

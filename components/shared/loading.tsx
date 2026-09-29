@@ -12,7 +12,9 @@ export function PageLoader({ label = "Loading" }: { label?: string }) {
       <div className="h-1 w-full overflow-hidden bg-accent/10">
         <div className="h-full w-1/3 animate-[page-loader_1.15s_ease-in-out_infinite] rounded-full bg-accent" />
       </div>
-      <span className="sr-only">{label}</span>
+      <span role="status" className="sr-only">
+        {label}
+      </span>
     </div>
   );
 }

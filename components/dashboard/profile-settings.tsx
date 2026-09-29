@@ -1,115 +1,138 @@
 "use client";
-
-import { startTransition, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { useStudy } from "@/components/study/study-provider";
+import { LegacyImport } from "@/components/study/legacy-import";
+import { GroupPanel } from "@/components/study/group-panel";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Card } from "@/components/shared/card";
 import { Button } from "@/components/shared/button";
-import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 import { Input, Label, Select } from "@/components/shared/input";
-import { LoadingSpinner } from "@/components/shared/loading";
-import { BGM_OPTIONS } from "@/lib/constants";
+import { Feedback } from "@/components/shared/feedback";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { type Database } from "@/types/database";
-
-type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-
-export function ProfileSettings({ profile }: { profile: ProfileRow }) {
+import { integerInRange, validTimeZone, errorMessage } from "@/lib/validation";
+import { BGM_OPTIONS } from "@/lib/constants";
+import type { Profile } from "@/types/database";
+export function ProfileSettings() {
+  const s = useStudy();
   const router = useRouter();
-  const [displayName, setDisplayName] = useState(profile.display_name ?? "");
-  const [groupCode, setGroupCode] = useState(profile.group_code ?? "");
-  const [preferredBgm, setPreferredBgm] = useState(profile.preferred_bgm);
-  const [focusMinutes, setFocusMinutes] = useState(profile.default_focus_minutes);
-  const [breakMinutes, setBreakMinutes] = useState(profile.default_break_minutes);
-  const [isSaving, setIsSaving] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-
-  async function handleSave() {
-    setIsSaving(true);
-    setFeedback(null);
-
-    const supabase = createSupabaseBrowserClient();
-    const profilePayload: Database["public"]["Tables"]["profiles"]["Insert"] = {
-      id: profile.id,
-      display_name: displayName.trim() || "Study buddy",
-      group_code: groupCode.trim().toUpperCase() || null,
-      preferred_bgm: preferredBgm,
-      default_focus_minutes: Math.max(1, focusMinutes),
-      default_break_minutes: Math.max(1, breakMinutes)
-    };
-
-    const { error } = await supabase.from("profiles").upsert(profilePayload as never);
-
-    if (error) {
-      setFeedback(error.message);
-      setIsSaving(false);
-      return;
+  const [name, setName] = useState(s.profile.display_name ?? "");
+  const [zone, setZone] = useState(s.profile.timezone);
+  const [focus, setFocus] = useState(String(s.profile.default_focus_minutes));
+  const [rest, setRest] = useState(String(s.profile.default_break_minutes));
+  const [bgm, setBgm] = useState(s.profile.preferred_bgm);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+  async function save() {
+    setBusy(true);
+    setMessage(null);
+    setError(false);
+    try {
+      if (!name.trim()) throw new Error("Enter a display name.");
+      if (!validTimeZone(zone)) throw new Error("Choose a valid timezone such as Asia/Kolkata.");
+      const focusMinutes = integerInRange(focus, 1, 180, "Focus minutes");
+      const breakMinutes = integerInRange(rest, 1, 60, "Break minutes");
+      const { error } = await createSupabaseBrowserClient().from("profiles").upsert({
+        id: s.profile.id,
+        display_name: name.trim(),
+        timezone: zone.trim(),
+        preferred_bgm: bgm,
+        default_focus_minutes: focusMinutes,
+        default_break_minutes: breakMinutes
+      });
+      if (error) throw error;
+      s.configure({ focusMinutes, breakMinutes });
+      s.setTrack(bgm);
+      s.invalidate();
+      router.refresh();
+      setMessage("Preferences saved. Active timers keep their current durations.");
+    } catch (error) {
+      setError(true);
+      setMessage(errorMessage(error));
+    } finally {
+      setBusy(false);
     }
-
-    setFeedback("Settings saved.");
-    setIsSaving(false);
-    startTransition(() => router.refresh());
   }
-
   return (
-    <div className="grid max-w-6xl gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(300px,0.55fr)]">
-      <Card className="p-6">
-        <CardTitle>Profile & defaults</CardTitle>
-        <CardDescription className="mt-2">
-          Set the way your dashboard should feel every time you open it.
-        </CardDescription>
-
-        <div className="mt-8 grid gap-5">
+    <div className="space-y-6">
+      <Card>
+        <h2 className="text-xl font-semibold">Profile and preferences</h2>
+        <form
+          className="mt-5 grid gap-5 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void save();
+          }}
+        >
           <div>
-            <Label htmlFor="displayName">Display name</Label>
-            <Input id="displayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
-          </div>
-
-          <div>
-            <Label htmlFor="groupCode">Group code</Label>
+            <Label htmlFor="display-name">Display name</Label>
             <Input
-              id="groupCode"
-              value={groupCode}
-              onChange={(event) => setGroupCode(event.target.value.toUpperCase())}
-              placeholder="FOCUS-7"
-              maxLength={20}
+              id="display-name"
+              required
+              maxLength={80}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
-            <p className="mt-2 text-xs text-muted-foreground">
-              Anyone with the same code will appear in the private leaderboard.
+          </div>
+          <div>
+            <Label htmlFor="timezone">Study timezone</Label>
+            <Input
+              id="timezone"
+              list="timezones"
+              required
+              value={zone}
+              onChange={(e) => setZone(e.target.value)}
+            />
+            <datalist id="timezones">
+              {[
+                "Asia/Kolkata",
+                "UTC",
+                "Europe/London",
+                "America/New_York",
+                "America/Los_Angeles",
+                "Asia/Singapore",
+                "Australia/Sydney"
+              ].map((z) => (
+                <option key={z} value={z} />
+              ))}
+            </datalist>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Used for goals, history, and leaderboard dates.
             </p>
           </div>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="focusDefault">Default focus minutes</Label>
-              <Input
-                id="focusDefault"
-                type="number"
-                min={1}
-                max={180}
-                value={focusMinutes}
-                onChange={(event) => setFocusMinutes(Math.max(1, Number(event.target.value) || 25))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="breakDefault">Default break minutes</Label>
-              <Input
-                id="breakDefault"
-                type="number"
-                min={1}
-                max={60}
-                value={breakMinutes}
-                onChange={(event) => setBreakMinutes(Math.max(1, Number(event.target.value) || 5))}
-              />
-            </div>
-          </div>
-
           <div>
-            <Label htmlFor="preferredBgm">Preferred BGM</Label>
+            <Label htmlFor="default-focus">Default focus minutes</Label>
+            <Input
+              id="default-focus"
+              type="number"
+              min={1}
+              max={180}
+              step={1}
+              required
+              value={focus}
+              onChange={(e) => setFocus(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="default-break">Default break minutes</Label>
+            <Input
+              id="default-break"
+              type="number"
+              min={1}
+              max={60}
+              step={1}
+              required
+              value={rest}
+              onChange={(e) => setRest(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="preferred-sound">Preferred sound</Label>
             <Select
-              id="preferredBgm"
-              value={preferredBgm}
-              onChange={(event) => setPreferredBgm(event.target.value as ProfileRow["preferred_bgm"])}
+              id="preferred-sound"
+              value={bgm}
+              onChange={(e) => setBgm(e.target.value as Profile["preferred_bgm"])}
             >
               {BGM_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -118,42 +141,27 @@ export function ProfileSettings({ profile }: { profile: ProfileRow }) {
               ))}
             </Select>
           </div>
-
-          {feedback ? (
-            <div className="rounded-3xl border border-border/70 bg-muted px-4 py-3 text-sm text-foreground">{feedback}</div>
-          ) : null}
-
-          <Button size="lg" className="w-fit min-w-40 gap-2" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <LoadingSpinner /> : null}
-            {isSaving ? "Saving..." : "Save settings"}
-          </Button>
-        </div>
-      </Card>
-
-      <div className="space-y-6">
-        <Card className="p-5">
-          <CardTitle>Account</CardTitle>
-          <CardDescription className="mt-2">
-            Sign out here or from the account menu in the navbar.
-          </CardDescription>
-          <div className="mt-5">
-            <SignOutButton variant="outline" size="md" />
+          <div className="self-end">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Save preferences"}
+            </Button>
           </div>
-        </Card>
-
-        <Card className="p-5">
-          <CardTitle>Audio files</CardTitle>
-          <CardDescription className="mt-2">
-            Place your audio files in <code className="rounded bg-muted px-2 py-1 text-xs">public/audio/</code> with the names:
-          </CardDescription>
-          <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
-            <li>white-noise.mp3</li>
-            <li>fireplace.mp3</li>
-            <li>rain.mp3</li>
-          </ul>
-        </Card>
-
-      </div>
+          <div className="sm:col-span-2">
+            <Feedback message={message} error={error} />
+          </div>
+        </form>
+      </Card>
+      <LegacyImport />
+      <section id="group">
+        <GroupPanel />
+      </section>
+      <Card>
+        <h2 className="text-lg font-semibold">Account</h2>
+        <p className="my-3 text-sm text-muted-foreground">
+          Your saved sessions stay in your account. Unsaved timers are available only on this browser.
+        </p>
+        <SignOutButton variant="outline" size="md" />
+      </Card>
     </div>
   );
 }

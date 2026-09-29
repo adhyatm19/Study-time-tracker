@@ -1,0 +1,10 @@
+node_modules
+.next
+package-lock.json
+types/database.ts
+public/audio
+supabase/*.sql
+supabase/migrations/*.sql
+test-results
+playwright-report
+*.tsbuildinfo

@@ -1,159 +1,137 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useState, useTransition } from "react";
-import { BarChart3, LayoutDashboard, Menu, Settings, UsersRound, X } from "lucide-react";
-
-import { UserMenu } from "@/components/auth/user-menu";
-import { buttonStyles } from "@/components/shared/button";
-import { PageLoader } from "@/components/shared/loading";
+import { type ReactNode } from "react";
+import { BarChart3, Timer, History, UsersRound, Settings } from "lucide-react";
+import { StudyProvider, useStudy } from "@/components/study/study-provider";
+import { PersistentTimer } from "@/components/study/persistent-timer";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { APP_NAME, NAV_ITEMS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { type Database } from "@/types/database";
-
-type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-
-const navIcons = {
-  "/dashboard": LayoutDashboard,
-  "/analytics": BarChart3,
-  "/leaderboard": UsersRound,
-  "/settings": Settings
-} as const;
-
-export function AppShell({
-  children,
-  profile
-}: {
-  children: ReactNode;
-  profile: ProfileRow;
-}) {
-  const pathname = usePathname();
+import { UserMenu } from "@/components/auth/user-menu";
+import { Button } from "@/components/shared/button";
+import type { Profile } from "@/types/database";
+const nav = [
+  { href: "/dashboard", label: "Timer", icon: Timer },
+  { href: "/history", label: "History", icon: History },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/leaderboard", label: "Circle", icon: UsersRound },
+  { href: "/settings", label: "Settings", icon: Settings }
+];
+function Shell({ children, profileError }: { children: ReactNode; profileError: string | null }) {
+  const s = useStudy();
+  const path = usePathname();
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNavigating, startNavigation] = useTransition();
-
-  function navigateTo(href: string) {
-    if (pathname === href) {
-      setIsMenuOpen(false);
-      return;
-    }
-
-    setIsMenuOpen(false);
-    startNavigation(() => {
-      router.push(href);
-    });
-  }
-
+  const focused = s.focused && path === "/dashboard";
   return (
-    <div className="min-h-svh px-3 py-3 sm:px-5">
-      {isNavigating ? <PageLoader label="Opening page" /> : null}
-      <div className="mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-[1500px] flex-col overflow-hidden rounded-[1.75rem] border border-border/80 bg-background/75 shadow-lifted backdrop-blur-xl">
-        <header className="border-b border-border/70 bg-card/85 px-4 py-4 sm:px-6">
-          <div className="grid items-center gap-4 lg:grid-cols-[minmax(220px,1fr)_auto_minmax(220px,1fr)]">
-            <Link href="/dashboard" className="inline-flex shrink-0 items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-full bg-muted text-sm font-semibold text-accent shadow-sm">
-                QL
-              </div>
-              <div>
-                <p className="font-semibold">{APP_NAME}</p>
-                <p className="text-sm text-muted-foreground">
-                  {profile.group_code ? `Group ${profile.group_code}` : "Set a group code in settings"}
-                </p>
-              </div>
+    <div className="mx-auto max-w-[1600px] px-4 pb-28 sm:px-7 lg:pb-8">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-3">
+        Skip to main content
+      </a>
+      <aside
+        hidden={focused}
+        className="glass-sidebar fixed inset-y-0 left-0 z-30 hidden w-52 flex-col overflow-y-auto border-r border-border/40 px-4 py-7 lg:flex"
+      >
+        <Link href="/dashboard" className="flex items-center gap-3 font-semibold tracking-tight">
+          <span className="brand-mark shrink-0">ql.</span>
+          <span>
+            Quiet Ledger
+            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Your focus studio</span>
+          </span>
+        </Link>
+        <p className="eyebrow mb-3 mt-10 px-3">Workspace</p>
+        <nav aria-label="Main navigation" className="space-y-1">
+          {nav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={path === item.href ? "page" : undefined}
+              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${path === item.href ? "bg-accent/10 font-medium text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            >
+              <item.icon size={18} strokeWidth={1.7} aria-hidden="true" />
+              {item.label}
             </Link>
-
-            <nav className="hidden items-center gap-1 rounded-full bg-background/55 p-1 lg:flex">
-              {NAV_ITEMS.map((item) => {
-                const Icon = navIcons[item.href];
-
-                return (
-                  <button
-                    key={item.href}
-                    type="button"
-                    onClick={() => navigateTo(item.href)}
-                    disabled={isNavigating}
-                    className={cn(
-                      buttonStyles({
-                        variant: pathname === item.href ? "secondary" : "ghost",
-                        size: "sm"
-                      }),
-                      "gap-2 px-4",
-                      pathname === item.href && "bg-muted text-accent shadow-sm"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="flex items-center justify-end gap-2">
-              <div className="hidden items-center gap-2 lg:flex">
-                <ThemeToggle />
-                <UserMenu
-                  displayName={profile.display_name || "Study buddy"}
-                  groupCode={profile.group_code}
-                  onNavigate={navigateTo}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsMenuOpen((current) => !current)}
-                className="grid h-11 w-11 place-items-center rounded-full border border-border/70 bg-background/70 text-foreground transition hover:bg-muted lg:hidden"
-                aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-                aria-expanded={isMenuOpen}
-              >
-                {isMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
-              </button>
-            </div>
+          ))}
+        </nav>
+        <div className="mt-auto px-3 pt-10">
+          <span className="mb-3 block h-1 w-7 rounded-full bg-accent" />
+          <p className="text-sm font-medium">
+            Small sessions.
+            <br />
+            Lasting progress.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            A little more focused,
+            <br />
+            every day.
+          </p>
+        </div>
+      </aside>
+      <div className={focused ? "mx-auto max-w-6xl" : "lg:ml-52 lg:pl-4"}>
+        <header hidden={focused} className="flex items-center justify-between gap-3 py-4">
+          <Link href="/dashboard" className="flex items-center gap-3 font-semibold lg:hidden">
+            <span className="brand-mark">ql.</span>
+            <span className="hidden sm:inline">Quiet Ledger</span>
+          </Link>
+          <div className="hidden lg:block">
+            <p className="eyebrow">
+              Quiet Ledger / {nav.find((item) => item.href === path)?.label ?? "Study"}
+            </p>
+            <p className="mt-1 text-sm font-medium">
+              Welcome back, {s.profile.display_name || "study buddy"}.
+            </p>
           </div>
-
-          {isMenuOpen ? (
-            <div className="mt-4 rounded-[1.25rem] border border-border/70 bg-background/70 p-3 lg:hidden">
-              <nav className="grid gap-2 sm:grid-cols-2">
-                {NAV_ITEMS.map((item) => {
-                  const Icon = navIcons[item.href];
-
-                  return (
-                    <button
-                      key={item.href}
-                      type="button"
-                      onClick={() => navigateTo(item.href)}
-                      disabled={isNavigating}
-                      className={cn(
-                        buttonStyles({
-                          variant: pathname === item.href ? "secondary" : "ghost",
-                          size: "md"
-                        }),
-                        "justify-start gap-2 px-4",
-                        pathname === item.href && "bg-muted text-accent shadow-sm"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </nav>
-
-              <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/70 pt-3">
-                <ThemeToggle />
-                <UserMenu
-                  displayName={profile.display_name || "Study buddy"}
-                  groupCode={profile.group_code}
-                  onNavigate={navigateTo}
-                />
-              </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <UserMenu
+              displayName={s.profile.display_name || "Study buddy"}
+              onNavigate={(href) => router.push(href)}
+            />
+          </div>
+        </header>
+        <main id="main-content" className={focused ? "py-6" : "py-7"}>
+          {profileError ? (
+            <div role="alert" className="mb-4 rounded-xl border border-border p-4 text-sm">
+              {profileError}
+              <Button variant="ghost" onClick={() => router.refresh()}>
+                Retry profile
+              </Button>
             </div>
           ) : null}
-        </header>
-
-        <main className="flex-1 px-5 py-8 sm:px-7">{children}</main>
+          <PersistentTimer />
+          <div hidden={focused}>{children}</div>
+        </main>
       </div>
+      <nav
+        hidden={focused}
+        aria-label="Mobile navigation"
+        className="glass-dock fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 grid grid-cols-5 rounded-[1.75rem] border border-border/40 p-2 lg:hidden"
+      >
+        {nav.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={path === item.href ? "page" : undefined}
+            className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] ${path === item.href ? "bg-muted font-semibold text-accent" : "text-muted-foreground"}`}
+          >
+            <item.icon size={19} aria-hidden="true" />
+            {item.label}
+          </Link>
+        ))}
+      </nav>
     </div>
+  );
+}
+export function AppShell({
+  children,
+  profile,
+  profileError = null
+}: {
+  children: ReactNode;
+  profile: Profile;
+  profileError?: string | null;
+}) {
+  return (
+    <StudyProvider profile={profile}>
+      <Shell profileError={profileError}>{children}</Shell>
+    </StudyProvider>
   );
 }

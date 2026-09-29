@@ -1,12 +1,6 @@
 import { Card, CardDescription, CardTitle } from "@/components/shared/card";
 
-export function EmptyState({
-  title,
-  description
-}: {
-  title: string;
-  description: string;
-}) {
+export function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <Card className="flex min-h-52 flex-col items-center justify-center rounded-[1.35rem] border-dashed text-center">
       <CardTitle>{title}</CardTitle>

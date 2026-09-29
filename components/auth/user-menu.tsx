@@ -1,69 +1,71 @@
 "use client";
-
-import { ChevronDown, Settings } from "lucide-react";
-import { useState } from "react";
-
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { cn } from "@/lib/utils";
-
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { SignOutButton } from "./sign-out-button";
+import { Button } from "@/components/shared/button";
 export function UserMenu({
   displayName,
-  groupCode,
   onNavigate
 }: {
   displayName: string;
   groupCode?: string | null;
   onNavigate?: (href: string) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen((current) => !current)}
-        className={cn(
-          "inline-flex h-10 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 text-sm font-medium transition hover:bg-muted/70",
-          isOpen && "bg-muted text-accent"
-        )}
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
+    <div
+      ref={root}
+      className="relative"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          setOpen(false);
+          trigger.current?.focus();
+        }
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
+      }}
+    >
+      <Button
+        ref={trigger}
+        variant="outline"
+        size="sm"
+        aria-expanded={open}
+        aria-controls="account-options"
+        aria-label={`Account for ${displayName}`}
+        onClick={() => setOpen(!open)}
+        className="gap-2"
       >
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-muted text-xs font-semibold text-accent">
-          {displayName.slice(0, 1).toUpperCase()}
-        </span>
-        <span className="hidden max-w-32 truncate md:inline">{displayName}</span>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition", isOpen && "rotate-180")} aria-hidden="true" />
-      </button>
-
-      {isOpen ? (
+        <span className="max-w-20 truncate sm:max-w-32">{displayName}</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </Button>
+      {open ? (
         <div
-          role="menu"
-          className="absolute right-0 top-12 z-30 w-64 overflow-hidden rounded-2xl border border-border/70 bg-card p-2 shadow-lifted"
+          id="account-options"
+          className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-border bg-card p-3 shadow-lifted"
         >
-          <div className="px-3 py-3">
-            <p className="truncate text-sm font-semibold">{displayName}</p>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {groupCode ? `Group ${groupCode}` : "No group code set"}
-            </p>
-          </div>
-
-          <button
-            type="button"
+          <p className="mb-2 truncate px-2 text-sm font-semibold">{displayName}</p>
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
             onClick={() => {
-              setIsOpen(false);
+              setOpen(false);
               onNavigate?.("/settings");
             }}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-muted"
-            role="menuitem"
           >
-            <Settings className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             Settings
-          </button>
-
-          <div className="mt-2 border-t border-border/70 pt-2">
-            <SignOutButton variant="ghost" size="sm" className="w-full justify-start rounded-xl px-3" />
-          </div>
+          </Button>
+          <SignOutButton className="w-full justify-start" />
         </div>
       ) : null}
     </div>

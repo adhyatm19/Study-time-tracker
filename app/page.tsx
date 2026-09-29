@@ -1,154 +1,116 @@
 import Link from "next/link";
-
+import { ArrowUpRight, AudioLines, ChartNoAxesCombined, Timer, UsersRound } from "lucide-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { buttonStyles } from "@/components/shared/button";
-import { Card } from "@/components/shared/card";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { APP_NAME } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 export default async function LandingPage() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
-
+  const destination = user ? "/dashboard" : "/auth/sign-up";
   return (
-    <div className="relative overflow-hidden">
-      <div aria-hidden="true" className="grid-overlay absolute inset-0 opacity-40" />
+    <div className="overflow-hidden">
       <SiteHeader isAuthenticated={Boolean(user)} />
-
-      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-16 px-6 pb-16 pt-8">
-        <section className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="max-w-2xl">
-            <p className="mb-5 inline-flex rounded-full border border-border/70 bg-background/80 px-4 py-2 text-sm text-muted-foreground shadow-soft">
-              Private study tracking for close-knit friend groups
+      <main className="mx-auto max-w-7xl px-5 pb-10 sm:px-6">
+        <section className="grid items-center gap-16 py-14 lg:min-h-[650px] lg:grid-cols-[1.1fr_1fr] lg:gap-20 lg:py-20">
+          <div>
+            <p className="eyebrow flex items-center gap-3 !text-accent">
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              Introducing your personal focus space
             </p>
-            <h1 className="text-5xl font-semibold sm:text-6xl">
-              {APP_NAME} keeps your focus visible without turning it into a game.
+            <h1 className="mt-7 text-[clamp(3.4rem,7.3vw,6.6rem)] font-semibold leading-[1.04] tracking-[-0.055em]">
+              A little focus.
+              <br />
+              A lot of
+              <br />
+              <span className="text-accent">possibility.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
-              Track real study sessions, settle into a calm timer, and compare progress with your group through a
-              shared leaderboard and simple analytics.
+            <p className="mt-7 max-w-md text-base leading-7 text-muted-foreground sm:text-lg">
+              A beautiful space to do your best work. Find your flow, build a study habit, and make every
+              session count.
             </p>
-
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <Link href={user ? "/dashboard" : "/auth/sign-up"} className={buttonStyles({ size: "lg" })}>
-                {user ? "Go to dashboard" : "Start tracking"}
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link href={destination} className={buttonStyles({ size: "lg", className: "gap-5" })}>
+                {user ? "Back to your workspace" : "Find your focus"}
+                <ArrowUpRight size={18} />
               </Link>
-              <Link href={user ? "/leaderboard" : "/auth/login"} className={buttonStyles({ variant: "outline", size: "lg" })}>
-                {user ? "View leaderboard" : "Sign in"}
+              <Link href="#details" className={buttonStyles({ variant: "ghost", size: "lg" })}>
+                Take a closer look
               </Link>
             </div>
-
-            <div className="mt-12 grid gap-4 sm:grid-cols-3">
-              {[
-                ["Two timer modes", "Stopwatch and Pomodoro, both persisted across refreshes."],
-                ["Shared leaderboard", "Only friends with the same group code appear together."],
-                ["Soft analytics", "14-day, 30-day, and weekly average charts without clutter."]
-              ].map(([title, description]) => (
-                <Card key={title} className="rounded-[1.75rem] p-5">
-                  <p className="font-medium">{title}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
-                </Card>
-              ))}
+            <p className="mt-6 text-xs text-muted-foreground">Beautifully simple. Quietly powerful.</p>
+          </div>
+          <div className="landing-clock relative">
+            <div aria-hidden="true" className="absolute -inset-10 -z-10 rounded-full bg-accent/5 blur-3xl" />
+            <div className="focus-panel rounded-[2rem] border border-border p-6 shadow-lifted sm:p-8">
+              <div className="flex items-center justify-between">
+                <span className="eyebrow">The focus studio</span>
+                <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">Preview</span>
+              </div>
+              <div className="my-10">
+                <div className="timer-orbit">
+                  <p className="eyebrow !text-accent">Time to go deeper</p>
+                  <p className="timer-digits my-3">25:00</p>
+                  <p className="text-xs text-muted-foreground">One thing at a time.</p>
+                </div>
+              </div>
+              <Link href={destination} className={buttonStyles({ size: "lg", className: "w-full gap-3" })}>
+                Start your first session
+                <ArrowUpRight size={17} />
+              </Link>
+              <div className="mt-6 flex items-center justify-between border-t border-border pt-5 text-xs text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <AudioLines size={16} />
+                  Set the atmosphere
+                </span>
+                <span>Rain · Fireplace · White noise</span>
+              </div>
             </div>
           </div>
-
-          <div className="space-y-6">
-            <Card className="overflow-hidden p-0">
-              <div className="border-b border-border/70 px-6 py-5">
-                <p className="text-sm font-medium text-muted-foreground">Timer preview</p>
-              </div>
-              <div className="space-y-6 p-6">
+        </section>
+        <section id="details" className="border-t border-border py-12">
+          <div className="mb-9 flex flex-wrap items-end justify-between gap-3">
+            <h2 className="text-3xl font-medium tracking-tight">Built for the way you work.</h2>
+            <p className="text-sm text-muted-foreground">Everything you need to keep showing up.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: Timer,
+                number: "01",
+                title: "Get into the zone",
+                text: "Set a Pomodoro or follow your own pace. Keep your timer close with focus mode and ambient sound."
+              },
+              {
+                icon: ChartNoAxesCombined,
+                number: "02",
+                title: "See your momentum",
+                text: "Turn your sessions into a clearer picture. Daily goals, study history, and insights that make progress visible."
+              },
+              {
+                icon: UsersRound,
+                number: "03",
+                title: "Grow together",
+                text: "A little accountability goes a long way. Invite your people to a private study circle and build a rhythm together."
+              }
+            ].map(({ icon: Icon, number, title, text }) => (
+              <div key={number} className="card-surface rounded-3xl border border-border/30 p-8">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Free stopwatch</p>
-                    <p className="mt-2 text-4xl font-semibold">02:14:27</p>
-                  </div>
-                  <div className="rounded-full border border-border/70 bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
-                    Rain ambience
-                  </div>
+                  <Icon size={23} strokeWidth={1.5} className="text-accent" />
+                  <span className="eyebrow">{number}</span>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-3xl bg-muted px-4 py-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Today</p>
-                    <p className="mt-2 text-2xl font-semibold">4.5h</p>
-                  </div>
-                  <div className="rounded-3xl bg-muted px-4 py-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Streak</p>
-                    <p className="mt-2 text-2xl font-semibold">6 days</p>
-                  </div>
-                  <div className="rounded-3xl bg-muted px-4 py-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">This week</p>
-                    <p className="mt-2 text-2xl font-semibold">22.8h</p>
-                  </div>
-                </div>
+                <h3 className="mb-3 mt-8 text-lg font-semibold tracking-tight">{title}</h3>
+                <p className="text-sm leading-7 text-muted-foreground">{text}</p>
               </div>
-            </Card>
-
-            <Card className="p-0">
-              <div className="border-b border-border/70 px-6 py-5">
-                <p className="text-sm font-medium text-muted-foreground">Leaderboard preview</p>
-              </div>
-              <div className="space-y-4 p-6">
-                {[
-                  ["1", "Aadhya", "38.4h"],
-                  ["2", "Mira", "35.9h"],
-                  ["3", "Rehan", "33.1h"]
-                ].map(([rank, name, total]) => (
-                  <div key={name} className="flex items-center justify-between rounded-3xl bg-muted/80 px-4 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="grid h-10 w-10 place-items-center rounded-2xl border border-border/70 bg-background/80 text-sm font-semibold">
-                        {rank}
-                      </div>
-                      <div>
-                        <p className="font-medium">{name}</p>
-                        <p className="text-sm text-muted-foreground">Quiet study circle</p>
-                      </div>
-                    </div>
-                    <p className="text-lg font-semibold">{total}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            ))}
           </div>
         </section>
-
-        <section className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <p className="text-sm font-medium text-muted-foreground">What’s included</p>
-            <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              {[
-                "Supabase email/password auth",
-                "Private group leaderboard via shared group code",
-                "Ambient BGM from local audio files",
-                "Mobile-friendly dashboard layout",
-                "Daily and weekly analytics with Recharts",
-                "Profile settings for defaults and preferences"
-              ].map((item) => (
-                <div key={item} className="rounded-3xl border border-border/70 bg-background/70 px-4 py-4 text-sm">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="flex flex-col justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Built for a polished MVP</p>
-              <p className="mt-4 text-lg leading-8">
-                Clean cards, soft spacing, dark mode, and deploy-ready structure for Vercel and Supabase.
-              </p>
-            </div>
-            <Link
-              href={user ? "/dashboard" : "/auth/sign-up"}
-              className={cn(buttonStyles({ variant: "outline" }), "mt-8 justify-center")}
-            >
-              {user ? "Continue to app" : "Create your group space"}
-            </Link>
-          </Card>
-        </section>
+        <footer className="flex flex-wrap justify-between gap-3 border-t border-border pt-7 text-xs text-muted-foreground">
+          <p>Quiet Ledger</p>
+          <p>Make space for what matters.</p>
+        </footer>
       </main>
     </div>
   );

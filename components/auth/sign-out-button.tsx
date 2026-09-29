@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 
 import { Button, type ButtonSize, type ButtonVariant } from "@/components/shared/button";
 import { LoadingSpinner } from "@/components/shared/loading";
+import { errorMessage } from "@/lib/validation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface SignOutButtonProps {
@@ -24,19 +25,25 @@ export function SignOutButton({ variant = "ghost", size = "sm", className }: Sig
     setError(null);
     setIsSigningOut(true);
 
-    const supabase = createSupabaseBrowserClient();
-    const { error: signOutError } = await supabase.auth.signOut();
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error: signOutError } = await supabase.auth.signOut();
 
-    if (signOutError) {
-      setError(signOutError.message);
+      if (signOutError) {
+        setError(signOutError.message);
+        setIsSigningOut(false);
+        return;
+      }
+
+      startTransition(() => {
+        router.replace("/");
+        router.refresh();
+      });
+    } catch (error) {
+      setError(errorMessage(error));
+    } finally {
       setIsSigningOut(false);
-      return;
     }
-
-    startTransition(() => {
-      router.replace("/");
-      router.refresh();
-    });
   }
 
   const isBusy = isSigningOut || isPending;
@@ -48,7 +55,11 @@ export function SignOutButton({ variant = "ghost", size = "sm", className }: Sig
         {isBusy ? "Signing out..." : "Log out"}
         {!isBusy ? <LogOut className="ml-2 h-4 w-4" aria-hidden="true" /> : null}
       </Button>
-      {error ? <p className="mt-2 text-xs text-red-500">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-2 text-xs text-red-500">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

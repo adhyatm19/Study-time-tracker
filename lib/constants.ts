@@ -1,10 +1,3 @@
-export const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/analytics", label: "Analytics" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/settings", label: "Settings" }
-] as const;
-
 export const BGM_OPTIONS = [
   { value: "off", label: "Off" },
   { value: "white-noise", label: "White noise" },
@@ -13,9 +6,9 @@ export const BGM_OPTIONS = [
 ] as const;
 
 export const AUDIO_TRACKS: Record<Exclude<(typeof BGM_OPTIONS)[number]["value"], "off">, string> = {
-  "white-noise": "/audio/white-noise.mp3",
-  fireplace: "/audio/fireplace.mp3",
-  rain: "/audio/rain.mp3"
+  "white-noise": "/audio/white-noise.wav",
+  fireplace: "/audio/fireplace.wav",
+  rain: "/audio/rain.wav"
 };
 
 export const LEADERBOARD_FILTERS = [
