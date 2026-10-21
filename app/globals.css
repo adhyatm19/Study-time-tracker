@@ -209,6 +209,153 @@ a {
     var(--shadow-control),
     0 0 0 0.5px hsl(var(--border) / 0.35);
 }
+.timer-ring {
+  position: relative;
+  width: min(100%, 300px);
+  aspect-ratio: 1;
+  container-type: inline-size;
+}
+.timer-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.timer-ring-track,
+.timer-ring-value {
+  fill: none;
+  stroke-width: 7;
+}
+.timer-ring-track {
+  stroke: hsl(var(--foreground) / 0.07);
+}
+.timer-ring-value {
+  stroke: hsl(var(--tone));
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px hsl(var(--tone) / 0.35));
+  transition:
+    stroke-dashoffset 1s linear,
+    stroke 300ms ease,
+    opacity 200ms ease;
+}
+.timer-ring-content {
+  position: absolute;
+  inset: 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+.ring-digits {
+  font-variant-numeric: tabular-nums;
+  font-size: 21cqi;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.ring-digits[data-long] {
+  font-size: 14.5cqi;
+  font-weight: 350;
+}
+.status-pill {
+  --tone: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 550;
+  color: hsl(var(--tone));
+  background: hsl(var(--tone) / 0.1);
+  box-shadow: 0 0 0 1px hsl(var(--tone) / 0.12) inset;
+}
+.status-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+.status-pill[data-running] .status-dot {
+  animation: status-pulse 1.6s ease-in-out infinite;
+}
+@keyframes status-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--tone) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px hsl(var(--tone) / 0);
+  }
+}
+.preset-chip {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  align-items: center;
+  border: 1px solid hsl(var(--border) / 0.65);
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.4);
+  font-size: 0.875rem;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+.preset-chip:hover:not(:disabled) {
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted));
+}
+.preset-chip[aria-pressed="true"] {
+  border-color: hsl(var(--accent) / 0.55);
+  background: hsl(var(--accent) / 0.1);
+  color: hsl(var(--accent));
+}
+.preset-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.kbd {
+  display: inline-block;
+  min-width: 1.4rem;
+  padding: 0 0.35rem;
+  border: 1px solid hsl(var(--border));
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: hsl(var(--card));
+  font-family: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.15rem;
+  text-align: center;
+  color: hsl(var(--foreground));
+}
+.focus-panel.is-focused {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 3rem);
+  border-color: transparent;
+  background: radial-gradient(ellipse at 50% 45%, hsl(var(--tone-blue) / 0.07), transparent 65%);
+  box-shadow: none;
+}
+.focus-panel.is-focused .focus-layout {
+  display: flex;
+  flex: 1;
+  margin-top: 0;
+}
+.focus-panel.is-focused .focus-clock {
+  flex: 1;
+  gap: 1.5rem;
+  border: 0;
+  background: none;
+}
+.focus-panel.is-focused .timer-ring {
+  width: min(82vw, 56svh, 460px);
+}
 .eyebrow {
   font-size: 0.75rem;
   font-weight: 550;

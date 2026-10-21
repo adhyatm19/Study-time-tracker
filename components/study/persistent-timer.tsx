@@ -1,15 +1,22 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Pause, Play, Timer, MoreHorizontal } from "lucide-react";
 import { useStudy, PersistentAudio } from "./study-provider";
+import { TimerRing } from "./timer-ring";
 import { Button } from "@/components/shared/button";
 import { Dialog } from "@/components/shared/dialog";
 import { Feedback } from "@/components/shared/feedback";
 import { Input, Label, Textarea } from "@/components/shared/input";
 import { formatClock, formatDuration } from "@/lib/utils";
 import { integerInRange, errorMessage } from "@/lib/validation";
+
+const PRESETS = [
+  { focus: 25, rest: 5 },
+  { focus: 50, rest: 10 },
+  { focus: 90, rest: 15 }
+];
 
 export function PersistentTimer() {
   const s = useStudy();
@@ -23,6 +30,7 @@ export function PersistentTimer() {
   const [resetUnreadable, setResetUnreadable] = useState(false);
   const [focus, setFocus] = useState(String(s.state.focusMinutes));
   const [rest, setRest] = useState(String(s.state.breakMinutes));
+  const [customOpen, setCustomOpen] = useState(false);
   useEffect(() => {
     setFocus(String(s.state.focusMinutes));
     setRest(String(s.state.breakMinutes));
@@ -36,6 +44,84 @@ export function PersistentTimer() {
   const active = s.state.status !== "idle";
   const pending = s.state.status === "pending";
   const disabled = s.busy || !s.ready || pending;
+  const onBreak = s.state.mode === "pomodoro" && s.state.phase === "break";
+  const clock = formatClock(s.seconds).replace(/^00:/, "");
+  const status = !s.ready
+    ? "Restoring"
+    : pending
+      ? "Waiting to save"
+      : s.state.status === "review"
+        ? "Reviewing"
+        : s.state.status === "paused"
+          ? "Paused"
+          : s.state.status === "running"
+            ? onBreak
+              ? "On break"
+              : s.state.mode === "pomodoro"
+                ? "Focusing"
+                : "Studying"
+            : "Ready";
+  const statusTone =
+    s.state.status === "running"
+      ? onBreak
+        ? "tone-green"
+        : "tone-blue"
+      : s.state.status === "paused"
+        ? "tone-peach"
+        : "";
+  const ringProgress = s.state.mode === "pomodoro" ? s.progress : active ? ((s.seconds % 60) / 60) * 100 : 0;
+  const preset = PRESETS.find((p) => p.focus === s.state.focusMinutes && p.rest === s.state.breakMinutes);
+  const showCustom = customOpen || !preset;
+  const canStart = !disabled && s.state.status !== "review";
+  function begin() {
+    void (async () => {
+      try {
+        if (s.state.status === "idle") {
+          await s.configure({
+            subject: subjectDraft,
+            focusMinutes: integerInRange(focus, 1, 180, "Focus minutes"),
+            breakMinutes: integerInRange(rest, 1, 60, "Break minutes")
+          });
+        }
+        s.startOrResume();
+      } catch (error) {
+        s.setMessage(errorMessage(error));
+      }
+    })();
+  }
+  // Keep the latest handler without rebinding the listener on every tick.
+  const shortcut = useRef<(event: KeyboardEvent) => void>(() => {});
+  shortcut.current = (event) => {
+    if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (document.querySelector("dialog[open]")) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("input, textarea, select, button, a, summary, [contenteditable='true']")) return;
+    if (event.key === " ") {
+      event.preventDefault();
+      if (s.state.status === "running") {
+        if (!disabled) s.pause();
+      } else if (canStart) begin();
+    } else if (event.key === "f" || event.key === "F") {
+      event.preventDefault();
+      s.setFocused(!s.focused);
+    } else if (event.key === "Escape" && s.focused) {
+      s.setFocused(false);
+    }
+  };
+  useEffect(() => {
+    if (!full) return;
+    const onKey = (event: KeyboardEvent) => shortcut.current(event);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [full]);
+  useEffect(() => {
+    if (!active || !s.ready) return;
+    const previous = document.title;
+    document.title = `${clock} · ${status}`;
+    return () => {
+      document.title = previous;
+    };
+  }, [active, s.ready, clock, status]);
   const primary =
     s.state.status === "running" ? (
       <Button size="lg" className="min-w-36 gap-2" onClick={s.pause} disabled={disabled}>
@@ -43,27 +129,7 @@ export function PersistentTimer() {
         Pause
       </Button>
     ) : (
-      <Button
-        size="lg"
-        className="min-w-36 gap-2"
-        onClick={() => {
-          void (async () => {
-            try {
-              if (s.state.status === "idle") {
-                await s.configure({
-                  subject: subjectDraft,
-                  focusMinutes: integerInRange(focus, 1, 180, "Focus minutes"),
-                  breakMinutes: integerInRange(rest, 1, 60, "Break minutes")
-                });
-              }
-              s.startOrResume();
-            } catch (error) {
-              s.setMessage(errorMessage(error));
-            }
-          })();
-        }}
-        disabled={disabled || s.state.status === "review"}
-      >
+      <Button size="lg" className="min-w-36 gap-2" onClick={begin} disabled={!canStart}>
         <Play size={18} />
         {active ? "Resume" : "Start focus"}
       </Button>
@@ -82,21 +148,36 @@ export function PersistentTimer() {
       s.setMessage(errorMessage(error));
     }
   }
+  const shortcutHint = (
+    <p className="hidden text-xs leading-5 text-muted-foreground [@media(pointer:fine)]:block">
+      <kbd className="kbd">Space</kbd> start or pause · <kbd className="kbd">F</kbd> focus mode
+      {s.focused ? (
+        <>
+          {" "}
+          · <kbd className="kbd">Esc</kbd> exit
+        </>
+      ) : null}
+    </p>
+  );
   return (
     <section aria-label="Study timer" className={full ? "mb-6" : "sticky top-0 z-20 mb-5"}>
       <div
         className={
           full
-            ? "focus-panel rounded-[22px] border border-border p-5 sm:p-6"
+            ? `focus-panel rounded-[22px] border border-border p-5 sm:p-6 ${s.focused ? "is-focused" : ""}`
             : "flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft"
         }
       >
         {full ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow">A little progress, every day.</p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">Focus session</h1>
-            </div>
+            {s.focused ? (
+              <span />
+            ) : (
+              <div>
+                <p className="eyebrow">A little progress, every day.</p>
+                <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">Focus session</h1>
+              </div>
+            )}
             <Button
               variant="ghost"
               aria-pressed={s.focused}
@@ -117,51 +198,52 @@ export function PersistentTimer() {
           <div className={full ? "focus-clock" : "flex flex-wrap items-center gap-2"}>
             {full ? (
               <>
-                <div className="timer-mode flex w-fit mx-auto" role="group" aria-label="Timer mode">
-                  {(["stopwatch", "pomodoro"] as const).map((mode) => (
-                    <Button
-                      key={mode}
-                      variant={s.state.mode === mode ? "primary" : "ghost"}
-                      size="sm"
-                      disabled={active || s.busy || !s.ready}
-                      aria-pressed={s.state.mode === mode}
-                      onClick={() => s.configure({ mode })}
-                      className="capitalize"
-                    >
-                      {mode}
-                    </Button>
-                  ))}
-                </div>
-                <div className="timer-orbit text-center">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {pending
-                      ? "Waiting to save"
-                      : s.state.mode === "pomodoro"
-                        ? `${s.state.phase} · ${s.state.status}`
-                        : s.state.status === "idle"
-                          ? "Ready when you are"
-                          : s.state.status}
+                {!s.focused ? (
+                  <div className="timer-mode flex w-fit mx-auto" role="group" aria-label="Timer mode">
+                    {(["stopwatch", "pomodoro"] as const).map((mode) => (
+                      <Button
+                        key={mode}
+                        variant={s.state.mode === mode ? "primary" : "ghost"}
+                        size="sm"
+                        disabled={active || s.busy || !s.ready}
+                        aria-pressed={s.state.mode === mode}
+                        onClick={() => s.configure({ mode })}
+                        className="capitalize"
+                      >
+                        {mode}
+                      </Button>
+                    ))}
+                  </div>
+                ) : null}
+                {s.focused && s.state.subject ? (
+                  <p className="max-w-xl text-center text-lg font-medium tracking-tight text-muted-foreground">
+                    {s.state.subject}
                   </p>
+                ) : null}
+                <TimerRing progress={ringProgress} tone={onBreak ? "break" : "focus"}>
+                  <span
+                    className={`status-pill ${statusTone}`}
+                    data-running={s.state.status === "running" || undefined}
+                  >
+                    <span className="status-dot" aria-hidden="true" />
+                    {status}
+                  </span>
                   <p
                     role="timer"
                     aria-label={s.state.mode === "pomodoro" ? "Time remaining" : "Elapsed study time"}
-                    className="timer-digits my-2"
+                    className="ring-digits"
+                    data-long={clock.length > 5 || undefined}
                   >
-                    {formatClock(s.seconds)}
+                    {clock}
                   </p>
-                  {s.state.mode === "pomodoro" ? (
-                    <div
-                      role="progressbar"
-                      aria-label="Current phase progress"
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.round(s.progress)}
-                      className="mt-2 h-1 w-40 overflow-hidden rounded-full bg-muted"
-                    >
-                      <div className="h-full bg-accent" style={{ width: `${s.progress}%` }} />
-                    </div>
-                  ) : null}
-                </div>
+                  <p className="text-xs text-muted-foreground">
+                    {s.state.mode === "pomodoro"
+                      ? `of ${onBreak ? s.state.breakMinutes : s.state.focusMinutes} min ${onBreak ? "break" : "focus"}`
+                      : active
+                        ? "active study time"
+                        : "stopwatch"}
+                  </p>
+                </TimerRing>
               </>
             ) : null}
             <div className="flex flex-wrap justify-center gap-2">
@@ -172,7 +254,8 @@ export function PersistentTimer() {
                 </Button>
               ) : null}
             </div>
-            {full ? (
+            {full && s.focused ? shortcutHint : null}
+            {full && !s.focused ? (
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -213,7 +296,7 @@ export function PersistentTimer() {
               </div>
             ) : null}
           </div>
-          {full ? (
+          {full && !s.focused ? (
             <div className="focus-settings">
               <div>
                 <Label htmlFor="session-subject">What are you working on?</Label>
@@ -227,35 +310,72 @@ export function PersistentTimer() {
                 />
               </div>
               {s.state.mode === "pomodoro" ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div>
-                    <Label htmlFor="focus-minutes">Focus (minutes)</Label>
-                    <Input
-                      id="focus-minutes"
-                      type="number"
-                      min={1}
-                      max={180}
-                      step={1}
-                      value={focus}
-                      disabled={active || s.busy}
-                      onChange={(e) => setFocus(e.target.value)}
-                      onBlur={() => setMinutes("focusMinutes", focus)}
-                    />
+                    <p id="preset-label" className="mb-2 text-[13px] font-medium">
+                      Session length
+                    </p>
+                    <div role="group" aria-labelledby="preset-label" className="flex flex-wrap gap-2">
+                      {PRESETS.map((p) => (
+                        <button
+                          key={p.focus}
+                          type="button"
+                          className="preset-chip"
+                          aria-pressed={!showCustom && preset === p}
+                          aria-label={`${p.focus} minute focus, ${p.rest} minute break`}
+                          disabled={active || s.busy || !s.ready}
+                          onClick={() => {
+                            setCustomOpen(false);
+                            void s.configure({ focusMinutes: p.focus, breakMinutes: p.rest });
+                          }}
+                        >
+                          {p.focus}
+                          <span className="text-muted-foreground">/{p.rest}</span>
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className="preset-chip"
+                        aria-pressed={showCustom}
+                        disabled={active || s.busy || !s.ready}
+                        onClick={() => setCustomOpen(true)}
+                      >
+                        Custom
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="break-minutes">Break (minutes)</Label>
-                    <Input
-                      id="break-minutes"
-                      type="number"
-                      min={1}
-                      max={60}
-                      step={1}
-                      value={rest}
-                      disabled={active || s.busy}
-                      onChange={(e) => setRest(e.target.value)}
-                      onBlur={() => setMinutes("breakMinutes", rest)}
-                    />
-                  </div>
+                  {showCustom ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="focus-minutes">Focus (minutes)</Label>
+                        <Input
+                          id="focus-minutes"
+                          type="number"
+                          min={1}
+                          max={180}
+                          step={1}
+                          value={focus}
+                          disabled={active || s.busy}
+                          onChange={(e) => setFocus(e.target.value)}
+                          onBlur={() => setMinutes("focusMinutes", focus)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="break-minutes">Break (minutes)</Label>
+                        <Input
+                          id="break-minutes"
+                          type="number"
+                          min={1}
+                          max={60}
+                          step={1}
+                          value={rest}
+                          disabled={active || s.busy}
+                          onChange={(e) => setRest(e.target.value)}
+                          onBlur={() => setMinutes("breakMinutes", rest)}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <p className="text-[13px] leading-5 text-muted-foreground">
@@ -267,6 +387,7 @@ export function PersistentTimer() {
                   ? "Your timer stays here when you refresh. Saved sessions sync across devices."
                   : "Restoring your timer…"}
               </p>
+              {shortcutHint}
             </div>
           ) : null}
         </div>
